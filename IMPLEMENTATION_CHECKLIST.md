@@ -91,8 +91,16 @@ Diuji lewat 32 test PHPUnit (`tests/Feature/Auth/*`) + verifikasi manual end-to-
 - [ ] Perubahan HPHT memicu rekalkulasi HPL & usia kehamilan di seluruh dashboard
 
 **Frontend**
-- [ ] Form data kehamilan (HPHT, gravida/para/abortus, tinggi/berat, gol. darah, riwayat penyakit multi-select, kontak faskes)
-- [ ] Tampilan riwayat kehamilan sebelumnya (bila > 1)
+- [x] Form data kehamilan (HPHT, gravida/para/abortus, tinggi/berat, gol. darah, riwayat penyakit multi-select, kontak faskes) — `app/dashboard/kehamilan/page.tsx`, `components/dashboard/pregnancy-form.tsx`
+- [x] Tampilan riwayat kehamilan sebelumnya (bila > 1) — `components/dashboard/pregnancy-history-list.tsx`, tampil di bawah form bila ada data selain yang `active`
+
+Dibangun sekaligus fondasi minimum yang belum ada tapi dibutuhkan agar halaman ini bisa dicapai sama sekali (bukan bagian dari F-03, tapi prasyarat langsungnya dari F-02 · Frontend yang belum dicentang):
+- `lib/stores/auth-store.ts` — access token & user di memory (Zustand), sesuai PRD §6.1
+- `app/dashboard/layout.tsx` — guard `/dashboard/*`, redirect ke `/masuk` bila tak ada sesi; header berisi nama pengguna + tombol Keluar
+- `/masuk` kini benar-benar menyimpan sesi & redirect ke `/dashboard/kehamilan` setelah berhasil (sebelumnya cuma menampilkan pesan sukses statis)
+- `lib/api-client.ts` diperluas: `apiGet`/`apiPut`, otomatis menyertakan header `Authorization` dari sesi tersimpan
+
+Backend `/pregnancies` belum ada (lihat Backend di atas — belum dipilih untuk dikerjakan), jadi submit & pemuatan data saat ini menampilkan galat 404 asli dari Laravel — sudah diverifikasi end-to-end di browser (login sungguhan → guard → form → panggilan API sungguhan → galat ditangani rapi), tinggal berfungsi penuh begitu endpoint backend-nya ada.
 
 ---
 

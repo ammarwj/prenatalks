@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/lib/stores/auth-store";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 type ApiSuccess<T> = {
@@ -25,18 +27,26 @@ export class ApiRequestError extends Error {
 }
 
 /**
- * Bentuk respons backend mengikuti PRD §11.1. Endpoint /auth/* belum tersedia
- * di backend (lihat IMPLEMENTATION_CHECKLIST.md, bagian F-02 · Backend) —
- * pemanggilan berikut akan gagal dengan pesan yang jelas sampai endpoint itu ada.
+ * Bentuk respons backend mengikuti PRD §11.1. Menyertakan header
+ * Authorization otomatis bila ada sesi tersimpan (lib/stores/auth-store.ts).
  */
-export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  let response: Response;
+async function apiRequest<T>(
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  path: string,
+  body?: unknown
+): Promise<T> {
+  const { accessToken } = useAuthStore.getState();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
 
+  let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
     throw new ApiRequestError("Tidak dapat terhubung ke server. Periksa koneksi Anda dan coba lagi.", 0);
@@ -57,3 +67,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
 
   return payload.data;
 }
+
+export const apiGet = <T>(path: string) => apiRequest<T>("GET", path);
+export const apiPost = <T>(path: string, body?: unknown) => apiRequest<T>("POST", path, body);
+export const apiPut = <T>(path: string, body?: unknown) => apiRequest<T>("PUT", path, body);

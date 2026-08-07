@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -12,12 +13,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiPost, ApiRequestError } from "@/lib/api-client";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import type { User } from "@/lib/types";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
+type LoginResponse = {
+  access_token: string;
+  user: User;
+};
+
 export default function MasukPage() {
+  const router = useRouter();
+  const setSession = useAuthStore((state) => state.setSession);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const {
     register,
@@ -28,26 +37,14 @@ export default function MasukPage() {
   async function onSubmit(values: LoginInput) {
     setServerError(null);
     try {
-      await apiPost("/auth/login", values);
-      setSuccess(true);
+      const data = await apiPost<LoginResponse>("/auth/login", values);
+      setSession(data.access_token, data.user);
+      router.push("/dashboard/kehamilan");
     } catch (err) {
       setServerError(
         err instanceof ApiRequestError ? err.message : "Terjadi kesalahan, coba lagi."
       );
     }
-  }
-
-  if (success) {
-    return (
-      <AuthCard eyebrow="PrenaTalks" title="Berhasil masuk" subtitle="Selamat datang kembali.">
-        <Link
-          href="/"
-          className="flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-white shadow-soft transition-colors hover:bg-[#EC4899]"
-        >
-          Ke beranda
-        </Link>
-      </AuthCard>
-    );
   }
 
   return (
