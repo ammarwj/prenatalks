@@ -69,15 +69,17 @@ Diuji lewat 32 test PHPUnit (`tests/Feature/Auth/*`) + verifikasi manual end-to-
 
 **Frontend**
 - [x] Halaman `/masuk`, `/daftar`, `/lupa-password`, `/reset-password` — form react-hook-form + Zod (PRD §6.1), memanggil `/auth/*` sungguhan lewat `lib/api-client.ts` (belum ada endpoint di backend, jadi saat ini menampilkan galat 404 dari Laravel — sudah diverifikasi bentuk galatnya sesuai §11.1)
-- [ ] Route Handler `app/api/auth/*` → simpan `refresh_token` ke cookie `httpOnly; Secure; SameSite=Lax`
-- [ ] Access token disimpan di memory (Zustand/Context), **tidak pernah** di `localStorage`
-- [ ] Interceptor: terima 401 → panggil refresh sekali → ulangi request
-- [ ] Guard rute `/dashboard/*` dan `/admin/*` (redirect ke `/masuk` bila tidak ada sesi)
-- [ ] Banner pengingat verifikasi email (blokir simpan assessment sebelum verifikasi)
+- [x] Route Handler `app/api/auth/*` → simpan `refresh_token` ke cookie `httpOnly; Secure (prod); SameSite=Lax` — `app/api/auth/{login,refresh,logout}/route.ts`, proxy ke Laravel; body respons ke client **tidak pernah** berisi `refresh_token`
+- [x] Access token disimpan di memory (Zustand/Context), **tidak pernah** di `localStorage` — sudah ada sejak F-03 (`lib/stores/auth-store.ts`), tanpa middleware `persist`
+- [x] Interceptor: terima 401 → panggil refresh sekali → ulangi request — `lib/api-client.ts`, flag `isRetry` mencegah loop; gagal refresh → `clearSession()` (guard di layout yang menangani redirect, bukan navigasi manual)
+- [x] Guard rute `/dashboard/*` dan `/admin/*` (redirect ke `/masuk` bila tidak ada sesi) — `/admin/*` juga menolak role selain admin/super_admin (redirect ke `/dashboard/kehamilan`); belum ada halaman admin sungguhan (F-14), guard-nya saja yang disiapkan
+- [x] Banner pengingat verifikasi email (blokir simpan assessment sebelum verifikasi) — tampil di `/dashboard/layout.tsx` bila `user.email_verified_at` kosong; "blokir simpan assessment" menyusul saat F-05 dibangun (belum ada fitur assessment sama sekali)
 
 **Definition of Done tambahan**
-- [ ] Audit manual: token tidak muncul di `localStorage`/`sessionStorage` pada DevTools
-- [ ] Uji rate limit & lockout (integration test)
+- [x] Audit manual: token tidak muncul di `localStorage`/`sessionStorage` pada DevTools — diverifikasi lewat `grep` menyeluruh (bukan hanya spot-check DevTools): tidak ada satu pun referensi `localStorage`/`sessionStorage` di `lib/`, `app/`, `components/`; `auth-store.ts` tanpa middleware `persist`
+- [x] Uji rate limit & lockout (integration test) — `LoginTest::test_route_level_throttle_limits_to_five_per_minute` (baru) + `test_account_locks_out_after_ten_consecutive_failures` (sebelumnya)
+
+Mekanisme cookie diverifikasi end-to-end lewat `curl` langsung ke Route Handler (bukan cuma dibaca kodenya): login → `Set-Cookie: pt_refresh=...; HttpOnly; SameSite=lax; Max-Age=1209600`, refresh → cookie dirotasi (nilai berubah), reuse cookie lama → 401 + cookie dihapus, logout → cookie dihapus. Login sungguhan lewat browser juga dicek: `localStorage`/`sessionStorage` identik sebelum & sesudah login (nol entri baru), banner verifikasi email tampil benar. Satu hal yang belum sempat dipicu secara nyata: skenario retry-loop interceptor 401 di `api-client.ts` (perlu access_token benar-benar kedaluwarsa/invalid saat memanggil endpoint terproteksi yang sudah ada — sejauh ini baru diuji lewat review kode, bukan percobaan langsung).
 
 ---
 

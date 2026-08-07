@@ -92,4 +92,25 @@ class LoginTest extends TestCase
 
         $this->assertFalse(RateLimiter::tooManyAttempts('login-lockout:siti@example.com', 10));
     }
+
+    public function test_route_level_throttle_limits_to_five_per_minute(): void
+    {
+        User::factory()->create(['email' => 'siti@example.com']);
+
+        // Middleware TIDAK dinonaktifkan di sini — ini menguji throttle:5,1
+        // di routes/api.php (PRD §11.3), bukan lockout 10x di controller.
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/v1/auth/login', [
+                'email' => 'siti@example.com',
+                'password' => 'wrong-password',
+            ])->assertStatus(401);
+        }
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => 'siti@example.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(429)->assertJson(['success' => false]);
+    }
 }

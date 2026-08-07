@@ -12,15 +12,10 @@ import { FormField } from "@/components/shared/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiPost, ApiRequestError } from "@/lib/api-client";
+import { ApiRequestError } from "@/lib/api-error";
+import { authLogin } from "@/lib/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import type { User } from "@/lib/types";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
-
-type LoginResponse = {
-  access_token: string;
-  user: User;
-};
 
 export default function MasukPage() {
   const router = useRouter();
@@ -37,7 +32,7 @@ export default function MasukPage() {
   async function onSubmit(values: LoginInput) {
     setServerError(null);
     try {
-      const data = await apiPost<LoginResponse>("/auth/login", values);
+      const data = await authLogin(values.email, values.password);
       setSession(data.access_token, data.user);
       router.push("/dashboard/kehamilan");
     } catch (err) {

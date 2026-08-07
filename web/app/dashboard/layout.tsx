@@ -2,17 +2,19 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, MailWarning } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { apiPost } from "@/lib/api-client";
+import { authLogout } from "@/lib/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 /**
  * Guard `/dashboard/*` — arahkan ke /masuk bila tidak ada sesi (PRD F-02).
  * Sesi hanya hidup di memory (lihat auth-store.ts), jadi refresh halaman
- * akan selalu memicu redirect ini sampai alur refresh-via-cookie dibangun.
+ * akan selalu memicu redirect ini sampai auth-store dipulihkan lewat
+ * /api/auth/refresh saat memuat aplikasi (belum dibangun).
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -27,11 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [accessToken, router]);
 
   async function handleLogout() {
-    try {
-      await apiPost("/auth/logout");
-    } catch {
-      // tetap keluar secara lokal walau API tidak terjangkau
-    }
+    await authLogout(accessToken);
     clearSession();
     router.replace("/masuk");
   }
@@ -64,6 +62,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
+
+      {user && !user.email_verified_at && (
+        <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6">
+          <Alert className="rounded-xl border-warning/30 bg-feature-amber-soft">
+            <MailWarning className="size-4 text-warning" />
+            <AlertDescription className="text-warning">
+              Email Anda belum terverifikasi. Cek tautan verifikasi yang kami kirim ke{" "}
+              <strong>{user.email}</strong> — hasil cek risiko belum bisa disimpan sebelum email
+              diverifikasi.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">{children}</main>
     </div>
   );

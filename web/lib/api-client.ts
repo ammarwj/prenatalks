@@ -1,4 +1,8 @@
+import { authRefresh } from "@/lib/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
+
+export { ApiRequestError } from "@/lib/api-error";
+import { ApiRequestError } from "@/lib/api-error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
@@ -14,26 +18,19 @@ type ApiError = {
   errors?: Record<string, string[]>;
 };
 
-export class ApiRequestError extends Error {
-  fieldErrors?: Record<string, string[]>;
-  status: number;
-
-  constructor(message: string, status: number, fieldErrors?: Record<string, string[]>) {
-    super(message);
-    this.name = "ApiRequestError";
-    this.status = status;
-    this.fieldErrors = fieldErrors;
-  }
-}
-
 /**
  * Bentuk respons backend mengikuti PRD §11.1. Menyertakan header
  * Authorization otomatis bila ada sesi tersimpan (lib/stores/auth-store.ts).
+ *
+ * Saat menerima 401 dari request yang terautentikasi, coba refresh sekali
+ * lewat /api/auth/refresh lalu ulangi request — PRD §6.1 langkah 4. Bila
+ * refresh juga gagal, sesi lokal dihapus dan pengguna diarahkan ke /masuk.
  */
 async function apiRequest<T>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   path: string,
-  body?: unknown
+  body?: unknown,
+  isRetry = false
 ): Promise<T> {
   const { accessToken } = useAuthStore.getState();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -50,6 +47,19 @@ async function apiRequest<T>(
     });
   } catch {
     throw new ApiRequestError("Tidak dapat terhubung ke server. Periksa koneksi Anda dan coba lagi.", 0);
+  }
+
+  if (response.status === 401 && !isRetry && accessToken) {
+    try {
+      const refreshed = await authRefresh();
+      useAuthStore.getState().setSession(refreshed.access_token, refreshed.user);
+      return apiRequest<T>(method, path, body, true);
+    } catch {
+      // clearSession() men-trigger guard reaktif di dashboard/admin layout
+      // (accessToken jadi null → redirect ke /masuk), tidak perlu navigasi manual di sini.
+      useAuthStore.getState().clearSession();
+      throw new ApiRequestError("Sesi Anda berakhir, silakan masuk kembali.", 401);
+    }
   }
 
   let payload: ApiSuccess<T> | ApiError | null = null;
