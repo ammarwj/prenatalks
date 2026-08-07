@@ -136,6 +136,30 @@ class RiskAssessmentTest extends TestCase
         $this->assertCount(3, $submit->json('data.contributing_factors'));
     }
 
+    public function test_submit_is_blocked_until_email_is_verified(): void
+    {
+        $questionnaire = $this->createQuestionnaire();
+        $user = User::factory()->unverified()->create();
+        $assessment = RiskAssessment::create([
+            'user_id' => $user->id,
+            'questionnaire_id' => $questionnaire->id,
+            'questionnaire_version' => 1,
+            'status' => 'in_progress',
+        ]);
+        $age = Question::where('text', 'Usia?')->first();
+        $answer = $age->options()->where('label', '16-34')->first();
+        RiskAnswer::create([
+            'assessment_id' => $assessment->id, 'question_id' => $age->id,
+            'option_id' => $answer->id, 'score' => 0,
+        ]);
+
+        $this->withHeaders($this->authHeader($user))
+            ->postJson("/api/v1/assessments/{$assessment->id}/submit")
+            ->assertStatus(403);
+
+        $this->assertSame('in_progress', $assessment->fresh()->status);
+    }
+
     public function test_answering_the_same_question_twice_replaces_the_previous_answer(): void
     {
         $questionnaire = $this->createQuestionnaire();

@@ -105,6 +105,15 @@ class AssessmentController extends Controller
     {
         $this->authorizeInProgress($request, $assessment);
 
+        // PRD §6.1/§9: pengguna yang belum verifikasi email tetap bisa mengisi,
+        // tapi hasilnya tidak boleh disimpan — dicek di submit(), bukan store(),
+        // supaya pengiriman jawaban bertahap (autosave) tetap berjalan normal.
+        abort_if(
+            ! $request->user('api')->email_verified_at,
+            403,
+            'Verifikasi email Anda terlebih dahulu untuk menyimpan hasil cek risiko'
+        );
+
         $requiredQuestionIds = Question::where('questionnaire_id', $assessment->questionnaire_id)
             ->where('is_required', true)
             ->pluck('id');
