@@ -35,7 +35,7 @@ const optionalNumericString = z
 /**
  * HPHT tidak boleh di masa depan dan tidak lebih dari 300 hari lalu — PRD F-03 kriteria terima.
  */
-function isWithinHphtRange(value: string): boolean {
+export function isWithinHphtRange(value: string): boolean {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return false;
 
