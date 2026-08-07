@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, Heart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,10 +34,10 @@ export function CtaBanner() {
             size="lg"
             className="relative h-12 shrink-0 rounded-full bg-white px-6 text-base text-primary-text hover:bg-white/90"
           >
-            <a href="#cek-risiko">
+            <Link href="/daftar">
               Mulai Sekarang
               <ArrowRight className="size-4" />
-            </a>
+            </Link>
           </Button>
         </div>
       </Reveal>

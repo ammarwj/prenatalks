@@ -66,7 +66,7 @@ Urutan mengikuti dependensi wajib dari bagian 14.1: **fondasi → autentikasi �
 - [ ] Password di-hash bcrypt cost 12
 
 **Frontend**
-- [ ] Halaman `/masuk`, `/daftar`, `/lupa-password`, `/reset-password`
+- [x] Halaman `/masuk`, `/daftar`, `/lupa-password`, `/reset-password` — form react-hook-form + Zod (PRD §6.1), memanggil `/auth/*` sungguhan lewat `lib/api-client.ts` (belum ada endpoint di backend, jadi saat ini menampilkan galat 404 dari Laravel — sudah diverifikasi bentuk galatnya sesuai §11.1)
 - [ ] Route Handler `app/api/auth/*` → simpan `refresh_token` ke cookie `httpOnly; Secure; SameSite=Lax`
 - [ ] Access token disimpan di memory (Zustand/Context), **tidak pernah** di `localStorage`
 - [ ] Interceptor: terima 401 → panggil refresh sekali → ulangi request

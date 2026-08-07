@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { BookOpen, Phone, Rocket, ShieldCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -107,10 +108,10 @@ export function Hero() {
               size="lg"
               className="h-12 rounded-full bg-primary px-6 text-base text-white shadow-soft hover:bg-[#EC4899]"
             >
-              <a href="#cek-risiko">
+              <Link href="/daftar">
                 <Rocket className="size-4" />
                 Mulai Sekarang
-              </a>
+              </Link>
             </Button>
             <Button
               asChild
