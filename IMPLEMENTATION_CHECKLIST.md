@@ -9,11 +9,11 @@ Urutan mengikuti dependensi wajib dari bagian 14.1: **fondasi → autentikasi �
 ## 0. Fondasi Proyek (Minggu 1)
 
 **Backend**
-- [ ] Instalasi Laravel 13, koneksi PostgreSQL 16
-- [ ] Format respons standar (`success`/`message`/`data`/`meta`) sebagai middleware/trait global
-- [ ] Format error standar (`success:false`, `errors` per field)
-- [ ] Endpoint `GET /health`
-- [ ] CI dasar (lint + test on push)
+- [x] Instalasi Laravel 13, koneksi PostgreSQL 16 — `api/`, dijalankan via Docker (`docker-compose.yml` di root: `app`/`nginx`/`db`)
+- [x] Format respons standar (`success`/`message`/`data`/`meta`) sebagai trait global — `app/Traits/ApiResponse.php`
+- [x] Format error standar (`success:false`, `errors` per field) — `bootstrap/app.php` (`withExceptions`), mencakup 401/403/404/422/429/500
+- [x] Endpoint `GET /health` — diimplementasikan sebagai `GET /api/v1/health` (konsisten dengan base URL `/api/v1` di PRD §11), mengecek koneksi DB
+- [x] CI dasar (lint + test on push) — `.github/workflows/api-ci.yml`: Pint, PHPUnit, migrate smoke-test terhadap Postgres 16 service
 
 **Frontend**
 - [x] Instalasi Next.js (App Router) + Tailwind + shadcn/ui — `web/`, Next.js 16 (memenuhi syarat "14+")
@@ -23,8 +23,9 @@ Urutan mengikuti dependensi wajib dari bagian 14.1: **fondasi → autentikasi �
 - [ ] Panggilan ke `/health` berhasil dari frontend — menunggu backend Laravel
 
 **Infra**
-- [ ] Staging hidup di VPS (Nginx + PM2 + PHP-FPM)
-- [ ] `.env` frontend & backend sesuai Lampiran B (belum masuk repo)
+- [x] Lingkungan dev lokal via Docker — `docker-compose.yml` (`app` PHP 8.4-FPM, `nginx`, `db` Postgres 16), lihat `docker/php/Dockerfile` & `docker/nginx/default.conf`
+- [ ] Staging hidup di VPS (Nginx + PM2 + PHP-FPM) — deployment produksi belum dikerjakan
+- [x] `.env` backend disiapkan untuk Docker (`api/.env`, `api/.env.example`); `.env` frontend masih menyusul saat integrasi API
 
 ---
 
