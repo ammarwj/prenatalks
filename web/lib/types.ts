@@ -154,3 +154,57 @@ export type AdminQuestionnaire = {
   created_at: string;
   updated_at: string;
 };
+
+/** PRD §9 F-06 — Form Builder. Mesin yang sama dipakai survei (F-07) lewat `type = "survey"`. */
+export type FormFieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "date"
+  | "radio"
+  | "checkbox"
+  | "select"
+  | "scale"
+  | "file";
+
+export type FormStatus = "draft" | "published" | "closed";
+
+export type FormFieldValidation = {
+  min?: number;
+  max?: number;
+  regex?: string;
+  max_size_kb?: number;
+};
+
+/** Pilihan (radio/checkbox/select) berupa daftar label; skala berupa rentang {min,max}. */
+export type FormFieldOptions = string[] | { min: number; max: number };
+
+export type AdminFormField = {
+  id: number;
+  label: string;
+  description: string | null;
+  type: FormFieldType;
+  placeholder: string | null;
+  options: FormFieldOptions | null;
+  validation: FormFieldValidation | null;
+  is_required: boolean;
+  order_index: number;
+};
+
+export type AdminForm = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  type: "form" | "survey";
+  is_public: boolean;
+  requires_login: boolean;
+  is_anonymous: boolean;
+  one_response_per_user: boolean;
+  status: FormStatus;
+  opens_at: string | null;
+  closes_at: string | null;
+  fields: AdminFormField[];
+  created_at: string;
+  updated_at: string;
+};

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
 use App\Http\Controllers\Api\V1\AssessmentController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -28,6 +29,10 @@ Route::middleware('auth:api')->group(function () {
 
     Route::middleware('role:super_admin')->prefix('admin')->group(function () {
         Route::apiResource('questionnaires', AdminQuestionnaireController::class);
+    });
+
+    Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {
+        Route::apiResource('forms', AdminFormController::class);
     });
 });
 

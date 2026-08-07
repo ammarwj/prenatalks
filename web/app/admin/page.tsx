@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ListChecks } from "lucide-react";
+import { ClipboardList, ListChecks } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -12,13 +12,22 @@ export default function AdminHomePage() {
             untuk peran admin/super_admin.
           </p>
         </div>
-        <Link
-          href="/admin/kuesioner"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-        >
-          <ListChecks className="size-4" />
-          Checklist Risiko
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/kuesioner"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <ListChecks className="size-4" />
+            Checklist Risiko
+          </Link>
+          <Link
+            href="/admin/form"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <ClipboardList className="size-4" />
+            Form & Survei
+          </Link>
+        </div>
       </div>
     </div>
   );

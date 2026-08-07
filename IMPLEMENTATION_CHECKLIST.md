@@ -167,15 +167,19 @@ Ditemukan & diperbaiki saat verifikasi manual: dua tautan "Riwayat" sempat ditul
 ## F-06 · Form Builder (P0)
 
 **Backend**
-- [ ] Migrasi `forms`, `form_fields`
-- [ ] API builder: buat/ubah form, tambah/atur field (tipe, label, validasi min/maks/regex)
-- [ ] Validasi dinamis submission sesuai `validation JSONB` per field
-- [ ] Status form: draft/terbit/tutup, `opens_at`/`closes_at`
+- [x] Migrasi `forms`, `form_fields` — sesuai skema §10 (kolom `type`/`is_public`/`is_anonymous`/`one_response_per_user` disiapkan sekaligus untuk F-07 karena satu tabel dipakai bersama), plus kolom `placeholder` per field yang diminta spesifikasi builder
+- [x] API builder: buat/ubah form, tambah/atur field (tipe, label, validasi min/maks/regex) — `Admin/FormController` (index/store/show/update/destroy), pola `syncFields()` full-replace sama seperti `Admin/QuestionnaireController`; slug dibuat otomatis dari judul dan dijamin unik (`-2`, `-3`, dst.)
+- [x] Validasi dinamis submission sesuai `validation JSONB` per field — `App\Services\FormFieldRuleBuilder`: membangun rules Laravel per tipe field (text/textarea/number/date/radio/checkbox/select/scale/file) dari `is_required` + `validation` JSONB; disiapkan untuk dipakai endpoint submit publik di F-07 (`buildForFields()` menghasilkan key `field_{id}` siap pakai)
+- [x] Status form: draft/terbit/tutup, `opens_at`/`closes_at` — kolom tersimpan + `Form::isOpenForSubmission()` (status `published` dan berada dalam rentang `opens_at`/`closes_at`), diuji unit
+
+Validasi tambahan di `AdminFormRequest::withValidator()`: pilihan (radio/checkbox/select) minimal 1 opsi terisi, skala butuh `min < max`, pola regex divalidasi dengan `preg_match`, ukuran maksimum berkas dibatasi ≤ 2048 KB (2 MB) sesuai PRD. Diuji lewat 12 test `Feature/Admin/FormControllerTest` (RBAC admin & super_admin, CRUD, slug unik, seluruh validasi di atas) + 9 test `Unit/Services/FormFieldRuleBuilderTest` + 6 test `Unit/Models/FormTest` (`isOpenForSubmission`) — total suite backend 109 test lulus.
 
 **Frontend**
-- [ ] Antarmuka builder admin (tambah field, atur wajib/opsional, placeholder, validasi)
-- [ ] Pratinjau form sebelum terbit
-- [ ] Upload berkas field (maks 2MB) dengan validasi tipe
+- [x] Antarmuka builder admin (tambah field, atur wajib/opsional, placeholder, validasi) — `app/admin/form/**`, `components/admin/form-builder-form.tsx` (react-hook-form + `useFieldArray` bersarang untuk field & pilihan, editor validasi berbeda per tipe: panjang teks & regex, rentang angka, rentang skala, ukuran & ekstensi berkas). Diakses admin **dan** super_admin (beda dari kuesioner risiko yang super_admin-only) — mengandalkan guard `/admin/*` di layout, tanpa guard tambahan
+- [x] Pratinjau form sebelum terbit — `components/admin/form-preview-dialog.tsx`, render lokal murni di sisi klien dari nilai form yang sedang diisi (tanpa memanggil API — belum ada endpoint submission publik, itu bagian F-07), mendukung seluruh 9 tipe field
+- [x] Upload berkas field (maks 2MB) dengan validasi tipe — diatur dari sisi builder (field tipe "file": batas ukuran KB tervalidasi ≤ 2048 di client & server, daftar ekstensi diizinkan dipisah koma → `mimes:` rule backend); pratinjau menampilkan kontrol `<input type="file">`. Endpoint upload/submit sungguhan menyusul di F-07 bersama `form_submissions`/`form_answers`
+
+Diverifikasi lewat sesi browser sungguhan (Chrome devtools automation) end-to-end: login admin → buat form 2 field (teks dengan regex kode pos + pilihan tunggal 2 opsi) → pratinjau menampilkan judul, kedua field, dan pilihan radio persis sesuai input → simpan → data terverifikasi lewat query DB langsung (slug, `validation` JSONB regex, `options` JSONB array, `order_index` 10/20) → buka halaman edit, seluruh field terisi ulang benar dari server → uji regex tidak valid (`(`) diblokir client-side dengan pesan "Pola regex tidak valid" sebelum submit → perbaiki & simpan ulang berhasil ("Form diperbarui"). Data uji dibersihkan setelahnya.
 
 ---
 
