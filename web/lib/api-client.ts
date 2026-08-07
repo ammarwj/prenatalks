@@ -10,6 +10,7 @@ type ApiSuccess<T> = {
   success: true;
   message: string;
   data: T;
+  meta?: Record<string, unknown>;
 };
 
 type ApiError = {
@@ -26,12 +27,12 @@ type ApiError = {
  * lewat /api/auth/refresh lalu ulangi request — PRD §6.1 langkah 4. Bila
  * refresh juga gagal, sesi lokal dihapus dan pengguna diarahkan ke /masuk.
  */
-async function apiRequest<T>(
+async function apiRequestRaw<T>(
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
   isRetry = false
-): Promise<T> {
+): Promise<ApiSuccess<T>> {
   const { accessToken } = useAuthStore.getState();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (accessToken) {
@@ -53,7 +54,7 @@ async function apiRequest<T>(
     try {
       const refreshed = await authRefresh();
       useAuthStore.getState().setSession(refreshed.access_token, refreshed.user);
-      return apiRequest<T>(method, path, body, true);
+      return apiRequestRaw<T>(method, path, body, true);
     } catch {
       // clearSession() men-trigger guard reaktif di dashboard/admin layout
       // (accessToken jadi null → redirect ke /masuk), tidak perlu navigasi manual di sini.
@@ -75,14 +76,73 @@ async function apiRequest<T>(
     throw new ApiRequestError(message, response.status, fieldErrors);
   }
 
+  return payload;
+}
+
+async function apiRequest<T>(
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+  path: string,
+  body?: unknown
+): Promise<T> {
+  const payload = await apiRequestRaw<T>(method, path, body);
   return payload.data;
 }
 
 export const apiGet = <T>(path: string) => apiRequest<T>("GET", path);
+
+/**
+ * Sama seperti `apiGet`, tapi ikut mengembalikan `meta` (mis. pagination,
+ * ringkasan respon) yang dibuang oleh `apiGet` — dibutuhkan halaman yang
+ * memakai bagian `meta` dari amplop respons standar (PRD §11.1).
+ */
+export const apiGetWithMeta = async <T, M = Record<string, unknown>>(
+  path: string
+): Promise<{ data: T; meta?: M }> => {
+  const payload = await apiRequestRaw<T>("GET", path);
+  return { data: payload.data, meta: payload.meta as M | undefined };
+};
 export const apiPost = <T>(path: string, body?: unknown) => apiRequest<T>("POST", path, body);
 export const apiPut = <T>(path: string, body?: unknown) => apiRequest<T>("PUT", path, body);
 export const apiPatch = <T>(path: string, body?: unknown) => apiRequest<T>("PATCH", path, body);
 export const apiDelete = <T>(path: string) => apiRequest<T>("DELETE", path);
+
+/**
+ * Submit form/survei publik (`POST /forms/{slug}/submit`) — perlu `FormData`
+ * (bukan JSON) karena bisa memuat field unggah berkas, jadi tidak lewat
+ * `apiRequest`. Header Authorization tetap disertakan bila ada sesi (form
+ * bisa saja wajib login), tapi tanpa retry-refresh 401 seperti `apiRequest`
+ * karena 401 di sini berarti aturan form itu sendiri ("wajib login"), bukan
+ * token kedaluwarsa yang perlu diperbarui otomatis.
+ */
+export async function apiPostForm<T>(path: string, formData: FormData): Promise<T> {
+  const { accessToken } = useAuthStore.getState();
+  const headers: Record<string, string> = {};
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { method: "POST", headers, body: formData });
+  } catch {
+    throw new ApiRequestError("Tidak dapat terhubung ke server. Periksa koneksi Anda dan coba lagi.", 0);
+  }
+
+  let payload: ApiSuccess<T> | ApiError | null = null;
+  try {
+    payload = await response.json();
+  } catch {
+    // respons bukan JSON — ditangani di bawah
+  }
+
+  if (!response.ok || !payload || payload.success === false) {
+    const message = payload?.message ?? `Permintaan gagal (${response.status})`;
+    const fieldErrors = payload && "errors" in payload ? payload.errors : undefined;
+    throw new ApiRequestError(message, response.status, fieldErrors);
+  }
+
+  return payload.data;
+}
 
 /**
  * Endpoint PDF (`GET /assessments/{id}/pdf`) mengembalikan berkas biner, bukan

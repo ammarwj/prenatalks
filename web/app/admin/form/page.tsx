@@ -124,6 +124,9 @@ export default function FormListPage() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button asChild variant="outline" size="sm" className="rounded-full">
+                        <Link href={`/admin/form/${form.id}/respon`}>Respon</Link>
+                      </Button>
+                      <Button asChild variant="outline" size="sm" className="rounded-full">
                         <Link href={`/admin/form/${form.id}`}>Edit</Link>
                       </Button>
                       <Button

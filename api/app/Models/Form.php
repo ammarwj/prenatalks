@@ -35,6 +35,16 @@ class Form extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(FormSubmission::class);
+    }
+
+    public function exports(): HasMany
+    {
+        return $this->hasMany(FormExport::class);
+    }
+
     /**
      * Terbuka bagi pengisian bila status "published" dan waktu saat ini
      * berada dalam rentang opens_at/closes_at (PRD §9 F-06).

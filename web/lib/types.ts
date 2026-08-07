@@ -208,3 +208,64 @@ export type AdminForm = {
   created_at: string;
   updated_at: string;
 };
+
+/** PRD §9 F-07 — sisi publik `/survei/[slug]`, skor/atribut admin disembunyikan (tidak relevan, form tidak berskor). */
+export type PublicFormField = {
+  id: number;
+  label: string;
+  description: string | null;
+  type: FormFieldType;
+  placeholder: string | null;
+  options: FormFieldOptions | null;
+  validation: FormFieldValidation | null;
+  is_required: boolean;
+};
+
+export type PublicForm = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  type: "form" | "survey";
+  requires_login: boolean;
+  is_anonymous: boolean;
+  one_response_per_user: boolean;
+  is_open: boolean;
+  fields: PublicFormField[];
+};
+
+export type AdminFormSubmissionAnswer = {
+  field_id: number;
+  label: string;
+  value: string | string[] | null;
+};
+
+export type AdminFormSubmission = {
+  id: number;
+  respondent: { id: number; name: string } | null;
+  submitted_at: string;
+  answers: AdminFormSubmissionAnswer[];
+};
+
+export type FormResponseDistribution = {
+  field_id: number;
+  label: string;
+  counts: Record<string, number>;
+};
+
+export type FormResponseSummary = {
+  respondent_count: number;
+  distribution: FormResponseDistribution[];
+};
+
+export type FormExportFormat = "csv" | "xlsx";
+export type FormExportStatus = "processing" | "completed" | "failed";
+
+export type AdminFormExport = {
+  id: number;
+  format: FormExportFormat;
+  status: FormExportStatus;
+  download_url: string | null;
+  expires_at: string | null;
+  created_at: string;
+};

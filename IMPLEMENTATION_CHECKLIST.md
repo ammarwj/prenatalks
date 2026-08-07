@@ -186,19 +186,23 @@ Diverifikasi lewat sesi browser sungguhan (Chrome devtools automation) end-to-en
 ## F-07 · Survei & Export Data (P0)
 
 **Backend**
-- [ ] `forms` dengan `type = survey`, field `is_anonymous`, `one_response_per_user`
-- [ ] Migrasi `form_submissions`, `form_answers`
-- [ ] `GET /forms/{slug}` (publik/login sesuai konfigurasi), `POST /forms/{slug}/submit`
-- [ ] `GET /admin/forms`, `GET /admin/forms/{id}/submissions`
-- [ ] `POST /admin/forms/{id}/export?format=csv|xlsx` via queue (untuk >1.000 baris), `ExportSubmissions` job
-- [ ] Tautan unduh berumur 24 jam
-- [ ] BOM UTF-8 agar karakter Indonesia tidak rusak di Excel
-- [ ] ID responden hanya disertakan jika survei tidak anonim
+- [x] `forms` dengan `type = survey`, field `is_anonymous`, `one_response_per_user` — kolom ini sudah dibuat sekaligus di migrasi F-06 (satu tabel dipakai bersama form & survei)
+- [x] Migrasi `form_submissions`, `form_answers` — sesuai skema §10, plus tabel tambahan `form_exports` (di luar skema literal PRD) untuk melacak status/`file_path`/`expires_at` ekspor async — dibutuhkan agar "queue untuk >1.000 baris" dan "tautan unduh 24 jam" bisa diimplementasikan tanpa polling ad-hoc
+- [x] `GET /forms/{slug}` (publik/login sesuai konfigurasi), `POST /forms/{slug}/submit` — `Api\V1\FormController`, guard `is_public`/status draft/`requires_login` dicek manual di controller (bukan middleware `auth:api` blanket) karena aksesnya bergantung pengaturan tiap form; JWT tetap di-parse manual via `$request->user('api')` dibungkus try/catch supaya tamu tidak dilempar 401 oleh token yang tidak ada
+- [x] `GET /admin/forms`, `GET /admin/forms/{id}/submissions` — endpoint kedua mengembalikan submission berpaginasi + ringkasan (`respondent_count`, distribusi per field pilihan) di `meta.summary`
+- [x] `POST /admin/forms/{id}/export?format=csv|xlsx` via queue (untuk >1.000 baris), `ExportSubmissionsJob` — sinkron langsung selesai untuk ≤1.000 submission, dispatch ke queue `database` untuk sisanya; `FormExportService` menulis CSV (native `fputcsv`) atau XLSX (`openspout/openspout`, dependency baru — dipilih karena ringan, tanpa overhead PhpSpreadsheet/maatwebsite/excel untuk kebutuhan tabular sederhana ini)
+- [x] Tautan unduh berumur 24 jam — `FormExport::isDownloadable()` (`status=completed` + belum lewat `expires_at`), diunduh lewat rute admin terautentikasi (`GET .../export/{export}/download`, 410 bila kedaluwarsa) — bukan signed URL publik karena export memang admin-only (§5 RBAC)
+- [x] BOM UTF-8 agar karakter Indonesia tidak rusak di Excel — prefix `\xEF\xBB\xBF` sebelum baris CSV
+- [x] ID responden hanya disertakan jika survei tidak anonim — kolom `Responden` (format `"{id} - {nama}"`) hanya ditambahkan ke header/baris ekspor bila `!$form->is_anonymous`; konsisten dengan `form_submissions.user_id` yang memang tidak pernah diisi untuk form anonim sejak disimpan (F-06)
+
+`one_response_per_user` diberlakukan lewat `user_id` untuk pengguna masuk pada form tidak-anonim, atau `ip_hash` (SHA-256 dari IP) untuk tamu/form anonim — dua toggle ini independen di skema tapi saling memengaruhi cara deteksi duplikat dijalankan. Diuji lewat 38 test baru (`Feature/FormSubmissionTest` 15 test — gating publik, validasi dinamis, upload berkas, deteksi duplikat; `Feature/Admin/FormExportControllerTest` 8 test — CSV/XLSX sinkron & async, throttle 3/jam, kedaluwarsa 410; plus tambahan di `Admin/FormControllerTest` — ringkasan & blokir hapus form berespon) — total suite backend 135 test lulus, Pint bersih.
 
 **Frontend**
-- [ ] Halaman publik `/survei/[slug]`
-- [ ] Ringkasan respon: jumlah responden, distribusi jawaban (bar chart)
-- [ ] Halaman admin: lihat respon, trigger export, unduh hasil
+- [x] Halaman publik `/survei/[slug]` — render field dinamis (9 tipe, reuse desain "option card" dari wizard cek risiko F-05), validasi klien dinamis (`lib/validations/form-submit.ts`) sebelum kirim, submit via `FormData` (mendukung unggah berkas) lewat helper baru `apiPostForm`; menangani 404 (form tidak publik/draft), 401 (wajib login → arahkan ke `/masuk`), dan status tertutup/belum buka
+- [x] Ringkasan respon: jumlah responden, distribusi jawaban (bar chart) — `components/admin/response-distribution-chart.tsx`, horizontal single-hue bar per pilihan (mengikuti panduan skill dataviz: satu seri tidak perlu legenda, label nilai di ujung bar)
+- [x] Halaman admin: lihat respon, trigger export, unduh hasil — `app/admin/form/[id]/respon/page.tsx`, tabel respon + panel ekspor (pilih format, daftar riwayat ekspor dengan status, unduh via `apiDownload`); ditambahkan helper `apiGetWithMeta` di `lib/api-client.ts` karena `apiGet` sebelumnya membuang bagian `meta` dari amplop respons (dibutuhkan untuk pagination & ringkasan)
+
+Ditemukan & diperbaiki saat verifikasi manual (Chrome devtools automation): field wajib yang belum disentuh pengguna menampilkan pesan error Zod mentah ("Invalid input: expected string, received undefined") alih-alih "Wajib diisi" — akar masalahnya adalah quirk Zod v4: `key` yang benar-benar tidak ada di objek `answers` (bukan `undefined` eksplisit) melewati validasi `preprocess`+`refine` begitu saja tanpa dicek. Diperbaiki dengan menginisialisasi `answers` memakai key eksplisit untuk setiap field saat form dimuat. Diverifikasi ulang end-to-end setelah perbaikan: submit tamu (respon tersimpan tanpa `user_id`), validasi wajib-isi & pilihan tidak valid diblokir client-side dengan pesan yang benar, admin melihat ringkasan (2 responden, distribusi 50%/50%) dan bar chart, ekspor CSV sinkron selesai lalu diunduh sukses (200).
 
 ---
 

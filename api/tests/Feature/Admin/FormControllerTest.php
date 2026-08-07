@@ -205,4 +205,65 @@ class FormControllerTest extends TestCase
         $this->assertCount(1, $response->json('data'));
         $this->assertArrayNotHasKey('fields', $response->json('data.0'));
     }
+
+    public function test_destroy_is_blocked_when_form_has_submissions(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $headers = $this->authHeader($admin);
+
+        $created = $this->withHeaders($headers)->postJson('/api/v1/admin/forms', $this->payload())->json('data');
+        $form = Form::find($created['id']);
+        $submission = $form->submissions()->create(['submitted_at' => now()]);
+        $submission->answers()->create(['field_id' => $form->fields()->first()->id, 'value' => 'Halo']);
+
+        $response = $this->withHeaders($headers)->deleteJson("/api/v1/admin/forms/{$form->id}");
+
+        $response->assertStatus(409);
+        $this->assertNotNull(Form::find($form->id));
+    }
+
+    public function test_admin_can_view_submissions_with_summary(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $headers = $this->authHeader($admin);
+
+        $created = $this->withHeaders($headers)->postJson('/api/v1/admin/forms', $this->payload())->json('data');
+        $form = Form::find($created['id']);
+        $textField = $form->fields()->where('type', 'text')->first();
+        $radioField = $form->fields()->where('type', 'radio')->first();
+
+        foreach (['Sangat puas', 'Sangat puas', 'Puas'] as $choice) {
+            $submission = $form->submissions()->create(['submitted_at' => now()]);
+            $submission->answers()->create(['field_id' => $textField->id, 'value' => 'Nama']);
+            $submission->answers()->create(['field_id' => $radioField->id, 'value' => $choice]);
+        }
+
+        $response = $this->withHeaders($headers)->getJson("/api/v1/admin/forms/{$form->id}/submissions");
+
+        $response->assertOk();
+        $this->assertCount(3, $response->json('data'));
+        $this->assertSame(3, $response->json('meta.summary.respondent_count'));
+
+        $distribution = collect($response->json('meta.summary.distribution'))
+            ->firstWhere('field_id', $radioField->id);
+        $this->assertSame(2, $distribution['counts']['Sangat puas']);
+        $this->assertSame(1, $distribution['counts']['Puas']);
+    }
+
+    public function test_non_admin_cannot_view_submissions(): void
+    {
+        // Bentuk form langsung lewat Eloquent (bukan panggilan API sebagai
+        // admin) — guard JWT tymon meng-cache user yang ter-resolve per
+        // instance aplikasi, jadi autentikasi sebagai dua pengguna berbeda
+        // dalam satu metode tes lewat pemanggilan API berturut-turut tidak
+        // bisa diandalkan (lihat pola yang sama di RiskAssessmentTest).
+        $form = Form::create([
+            'title' => 'Form Uji', 'slug' => 'form-uji', 'status' => 'draft',
+        ]);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $this->withHeaders($this->authHeader($user))
+            ->getJson("/api/v1/admin/forms/{$form->id}/submissions")
+            ->assertStatus(403);
+    }
 }
