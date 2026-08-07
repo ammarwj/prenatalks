@@ -1,0 +1,44 @@
+# --- OS / editor ---
+.DS_Store
+*.pem
+
+# --- web/ (Next.js) ---
+web/node_modules
+web/.next/
+web/out/
+web/build
+web/.vercel
+web/*.tsbuildinfo
+web/next-env.d.ts
+web/coverage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+bun-debug.log*
+
+# --- api/ (Laravel, once scaffolded) ---
+api/vendor/
+api/node_modules
+api/.env
+api/.env.backup
+api/.phpunit.result.cache
+api/storage/*.key
+api/bootstrap/cache/*.php
+api/public/hot
+api/public/storage
+api/storage/app/public/*
+!api/storage/app/public/.gitkeep
+api/storage/framework/cache/*
+!api/storage/framework/cache/.gitkeep
+api/storage/framework/sessions/*
+!api/storage/framework/sessions/.gitkeep
+api/storage/framework/views/*
+!api/storage/framework/views/.gitkeep
+api/storage/logs/*
+!api/storage/logs/.gitkeep
+
+# --- env files everywhere (opt-in per PRD §12.2: JWT secret never in repo) ---
+.env
+.env.local
+.env.*.local
