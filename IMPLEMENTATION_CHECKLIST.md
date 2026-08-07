@@ -116,27 +116,33 @@ Backend `/pregnancies` belum ada (lihat Backend di atas — belum dipilih untuk 
 - [x] Unit test: tahun kabisat, pergantian tahun — `tests/Unit/Services/PregnancyCalculatorTest.php` (14 kasus: kabisat Februari, HPL lintas kabisat, lintas pergantian tahun, batas trimester, progress overdue) + `tests/Feature/CalculatorTest.php` (5 kasus endpoint)
 
 **Frontend**
-- [ ] Halaman `/kalkulator` mode tamu (hasil tidak disimpan)
-- [ ] `/dashboard/kalkulator` mode login (hasil tersimpan via `/pregnancies`)
-- [ ] Progres visual melingkar per trimester
-- [ ] Catatan disclaimer siklus 28 hari / USG lebih akurat
+- [x] Halaman `/kalkulator` mode tamu (hasil tidak disimpan) — `app/kalkulator/page.tsx`
+- [x] `/dashboard/kalkulator` mode login (hasil tersimpan via `/pregnancies`) — `app/dashboard/kalkulator/page.tsx`; simpan memakai `PUT /pregnancies/{id}` bila sudah ada kehamilan aktif (partial update, field lain tidak tersentuh) atau `POST /pregnancies` bila belum ada
+- [x] Progres visual melingkar per trimester — `components/shared/circular-progress.tsx` (SVG, warna mengikuti trimester: teal/ungu/merah muda)
+- [x] Catatan disclaimer siklus 28 hari / USG lebih akurat — tampil persisten di `components/calculator/calculator-form.tsx`
+
+Komponen inti (`components/calculator/calculator-form.tsx`) dipakai bersama oleh kedua halaman; validasi HPHT (`lib/validations/calculator.ts`) memakai ulang `isWithinHphtRange` dari `lib/validations/pregnancy.ts` (F-03) supaya aturannya konsisten. Ditambahkan pula tautan "Buka Kalkulator" dari `/dashboard/kehamilan` agar halaman terjangkau dari alur dashboard (belum ada nav dashboard, F-13).
+
+Diverifikasi lewat `npm run lint` + `npm run build` (bersih) dan percobaan nyata di browser terhadap stack Docker: mode tamu (hitung, error validasi tanggal masa depan, tanpa opsi simpan) dan mode login (login sungguhan → prefill dari kehamilan aktif → hitung ulang → simpan) — dikonfirmasi lewat query DB langsung bahwa simpan kedua memakai `PUT` (baris tetap satu, `gravida` yang diisi lewat form F-03 tidak hilang) bukan `POST` baru.
 
 ---
 
 ## F-05 · Checklist Risiko — Core Feature (P0)
 
 **Backend**
-- [ ] Migrasi `questionnaires`, `questions`, `question_options`, `risk_levels`, `risk_assessments`, `risk_answers`
-- [ ] Seeder draf kuesioner (acuan KSPR) — **wajib siap Minggu 6** untuk dikirim ke bidan (jalur kritis, bagian 14.1)
-- [ ] `RiskScoringService` (jumlah skor, klasifikasi level, deteksi `is_danger_sign`)
-- [ ] `GET /questionnaires/active`
-- [ ] `POST /assessments` (mulai), `PATCH /assessments/{id}/answers` (simpan bertahap/autosave)
-- [ ] `POST /assessments/{id}/submit`
-- [ ] `GET /assessments` (riwayat), `GET /assessments/{id}`
-- [ ] `GET /assessments/{id}/pdf` (generator PDF hasil)
-- [ ] `admin/questionnaires/*` CRUD (super_admin only) — pertanyaan, opsi, bobot skor, ambang level
-- [ ] Assessment lama tetap tertaut ke `questionnaire_version` saat pengisian (riwayat tidak berubah walau kuesioner disunting)
-- [ ] Unit test: perhitungan skor, klasifikasi level, deteksi tanda bahaya
+- [x] Migrasi `questionnaires`, `questions`, `question_options`, `risk_levels`, `risk_assessments`, `risk_answers` — sesuai skema §10; `risk_levels.max_score` nullable untuk merepresentasikan tingkat teratas tanpa batas atas
+- [x] Seeder draf kuesioner (acuan KSPR) — `QuestionnaireSeeder`: 1 kuesioner aktif v1, 12 pertanyaan (3 grup: Riwayat/Kondisi/Tanda Bahaya), 27 opsi (4 ditandai `is_danger_sign`), 3 level risiko (Rendah/Sedang/Tinggi, ambang & warna sesuai tabel PRD §9)
+- [x] `RiskScoringService` (jumlah skor, klasifikasi level, deteksi `is_danger_sign`) — skor dasar konstan (`BASE_SCORE = 2`) + jumlah skor jawaban; level dipilih lewat `RiskLevel::coversScore()`
+- [x] `GET /questionnaires/active` — 404 rapi bila belum ada kuesioner aktif; `QuestionOptionResource` sengaja menyembunyikan `score`/`is_danger_sign` dari pengguna saat mengisi (anti "bermain skor" + nada tidak menakut-nakuti)
+- [x] `POST /assessments` (mulai), `PATCH /assessments/{id}/answers` (simpan bertahap/autosave) — jawaban ulang pada pertanyaan yang sama mengganti (delete+insert), bukan menumpuk
+- [x] `POST /assessments/{id}/submit` — ditolak (422) bila masih ada pertanyaan wajib belum dijawab atau assessment sudah `completed`
+- [x] `GET /assessments` (riwayat), `GET /assessments/{id}` — dibatasi ke assessment milik user sendiri (404, bukan 403, ke milik user lain)
+- [x] `GET /assessments/{id}/pdf` (generator PDF hasil) — `barryvdh/laravel-dompdf`, badge level + skor + rincian faktor penyumbang + rekomendasi + disclaimer wajib di atas & bawah; diverifikasi lewat `curl` sungguhan (PDF 1 halaman valid dikirim ke pengguna)
+- [x] `admin/questionnaires/*` CRUD (super_admin only) — pertanyaan, opsi, bobot skor, ambang level
+- [x] Assessment lama tetap tertaut ke `questionnaire_version` saat pengisian (riwayat tidak berubah walau kuesioner disunting) — edit pada kuesioner yang **belum** punya riwayat hasil mengubah di tempat; begitu ada riwayat (`RiskAssessment` tertaut), edit otomatis membuat baris `Questionnaire` versi baru & menonaktifkan versi lama, sehingga skor/level assessment lama tidak pernah berubah retroaktif
+- [x] Unit test: perhitungan skor, klasifikasi level, deteksi tanda bahaya — 12 test `RiskAssessmentTest` (alur skor penuh, ganti jawaban, validasi wajib-jawab, isolasi antar-user, PDF) + 7 test `Admin/QuestionnaireControllerTest` (RBAC, versioning, blokir hapus bila punya riwayat) = 19 test baru, seluruh suite backend 81 test lulus
+
+Diverifikasi manual lewat `curl` terhadap stack Docker sungguhan untuk seluruh alur: mulai → jawab bertahap → submit → skor & level benar, deteksi tanda bahaya independen dari total skor, unduh PDF, serta admin CRUD (buat/edit/hapus, penolakan hapus 409 bila punya riwayat, RBAC 403 untuk non-super_admin).
 
 **Frontend**
 - [ ] Kuesioner multi-langkah dengan autosave per langkah
