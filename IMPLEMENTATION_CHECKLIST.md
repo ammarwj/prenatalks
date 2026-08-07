@@ -86,11 +86,13 @@ Mekanisme cookie diverifikasi end-to-end lewat `curl` langsung ke Route Handler 
 ## F-03 · Profil Data Kehamilan (P0)
 
 **Backend**
-- [ ] Migrasi `pregnancies`
-- [ ] `GET/POST/PUT /pregnancies`, `/pregnancies/{id}`
-- [ ] Validasi: HPHT tidak di masa depan, tidak lebih dari 300 hari lalu
-- [ ] Aturan hanya satu `status = active` per user (constraint/service logic)
-- [ ] Perubahan HPHT memicu rekalkulasi HPL & usia kehamilan di seluruh dashboard
+- [x] Migrasi `pregnancies` — sesuai skema §10, plus indeks `(user_id, status)`
+- [x] `GET/POST/PUT /pregnancies`, `/pregnancies/{id}` — `PregnancyController` (index/store/show/update), semua di balik `auth:api`; kepemilikan divalidasi (pregnancy milik user lain → 404, bukan 403, supaya tidak bocor keberadaannya)
+- [x] Validasi: HPHT tidak di masa depan, tidak lebih dari 300 hari lalu — `StorePregnancyRequest`/`UpdatePregnancyRequest` (rules dibagi lewat trait `PregnancyValidationRules`, sama seperti `CalculatorRequest` F-04)
+- [x] Aturan hanya satu `status = active` per user (constraint/service logic) — **keduanya**: unique index parsial di level Postgres (`WHERE status = 'active'`, kebal race condition) + service logic yang otomatis memindahkan status aktif lama ke `completed` saat kehamilan baru dibuat
+- [x] Perubahan HPHT memicu rekalkulasi HPL & usia kehamilan di seluruh dashboard — `edd_date` dihitung ulang lewat `PregnancyCalculator::estimatedDueDate()` (service yang sama dipakai F-04) tiap kali `lmp_date` disimpan tanpa `edd_date` eksplisit; mengirim `edd_date` secara eksplisit menandainya sebagai override manual (`edd_overridden=true`)
+
+Diuji lewat 10 test PHPUnit baru (`tests/Feature/PregnancyTest.php`) + verifikasi manual lewat `curl` (create/update/list/lockout kepemilikan) + percobaan nyata di browser: form `/dashboard/kehamilan` yang dibangun turn sebelumnya kini benar-benar memuat & menyimpan data (sebelumnya menampilkan galat 404 karena endpoint ini belum ada) — dikonfirmasi lewat login sungguhan, form terisi data asli dari API, riwayat kehamilan tampil, dan submit menampilkan "Data kehamilan tersimpan." Total suite backend: 62 test lulus (termasuk F-04 yang dikerjakan bersamaan).
 
 **Frontend**
 - [x] Form data kehamilan (HPHT, gravida/para/abortus, tinggi/berat, gol. darah, riwayat penyakit multi-select, kontak faskes) — `app/dashboard/kehamilan/page.tsx`, `components/dashboard/pregnancy-form.tsx`
@@ -109,9 +111,9 @@ Backend `/pregnancies` belum ada (lihat Backend di atas — belum dipilih untuk 
 ## F-04 · Kalkulator Kehamilan (P0)
 
 **Backend**
-- [ ] `POST /calculator` (publik) — hitung usia kehamilan, HPL (Naegele), trimester, sisa hari, progress %
-- [ ] `PregnancyCalculator` service
-- [ ] Unit test: tahun kabisat, pergantian tahun
+- [x] `POST /calculator` (publik) — hitung usia kehamilan, HPL (Naegele), trimester, sisa hari, progress % — `app/Http/Controllers/Api/V1/CalculatorController.php`, `app/Http/Requests/CalculatorRequest.php` (HPHT tidak boleh di masa depan / lebih dari 300 hari lalu, sama seperti aturan F-03)
+- [x] `PregnancyCalculator` service — `app/Services/PregnancyCalculator.php`, dipakai bersama oleh F-03 (`estimatedDueDate()`) dan F-04 (`calculate()`)
+- [x] Unit test: tahun kabisat, pergantian tahun — `tests/Unit/Services/PregnancyCalculatorTest.php` (14 kasus: kabisat Februari, HPL lintas kabisat, lintas pergantian tahun, batas trimester, progress overdue) + `tests/Feature/CalculatorTest.php` (5 kasus endpoint)
 
 **Frontend**
 - [ ] Halaman `/kalkulator` mode tamu (hasil tidak disimpan)
