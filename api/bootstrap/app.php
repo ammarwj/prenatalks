@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasRole;
 use App\Traits\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,7 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role' => EnsureUserHasRole::class,
+        ]);
+
+        // API murni, tidak ada route web 'login' — jangan pernah redirect,
+        // biar AuthenticationException selalu dilempar bersih ke handler JSON.
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
@@ -50,7 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     $e->errors(),
                     422,
                 ),
-                $e instanceof AuthenticationException => $responder->make(
+                $e instanceof AuthenticationException, $e instanceof JWTException => $responder->make(
                     'Token tidak valid atau belum masuk',
                     null,
                     401,
@@ -65,7 +74,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     null,
                     429,
                 ),
-                $e instanceof NotFoundHttpException => $responder->make(
+                $e instanceof NotFoundHttpException, $e instanceof ModelNotFoundException => $responder->make(
                     'Data atau endpoint tidak ditemukan',
                     null,
                     404,

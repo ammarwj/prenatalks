@@ -52,18 +52,20 @@ Urutan mengikuti dependensi wajib dari bagian 14.1: **fondasi → autentikasi �
 ## F-02 · Autentikasi & Akun (P0) — prasyarat semua fitur berikutnya
 
 **Backend**
-- [ ] Migrasi `users`, `refresh_tokens` (skema bagian 10)
-- [ ] `tymon/jwt-auth`, algoritma HS256, `JWT_SECRET` 64+ karakter acak di `.env`
-- [ ] `POST /auth/register` — validasi password (min 8, huruf+angka), checkbox persetujuan wajib
-- [ ] Verifikasi email via signed URL (TTL 60 menit) — `POST /auth/verify-email/{id}/{hash}`
-- [ ] `POST /auth/login` — rate limit 5/menit/IP
-- [ ] `POST /auth/refresh` — rotasi token, token lama masuk denylist
-- [ ] `POST /auth/logout` — blacklist access token, hapus cookie
-- [ ] `POST /auth/forgot-password`, `POST /auth/reset-password`
-- [ ] `GET /auth/me`
-- [ ] Lockout 15 menit setelah 10 kegagalan login berturut-turut
-- [ ] Middleware RBAC (`user`/`health_worker`/`admin`/`super_admin`) via Policy/Gate
-- [ ] Password di-hash bcrypt cost 12
+- [x] Migrasi `users` (+ `phone`, `role`, `avatar_path`, `is_active`, `last_login_at`, soft delete), `refresh_tokens` (skema bagian 10)
+- [x] `tymon/jwt-auth` v2.3, algoritma HS256, `JWT_SECRET` 64 karakter acak (`jwt:secret`) di `.env` (tidak masuk repo)
+- [x] `POST /auth/register` — validasi password (min 8, huruf+angka), checkbox persetujuan wajib (`RegisterRequest`)
+- [x] Verifikasi email via signed URL (TTL 60 menit) — `POST /auth/verify-email/{id}/{hash}`, memakai notifikasi bawaan Laravel (`MustVerifyEmail`)
+- [x] `POST /auth/login` — rate limit 5/menit/IP (`throttle:5,1`)
+- [x] `POST /auth/refresh` — refresh token opaque tersendiri (bukan JWT), rotasi + token lama masuk denylist (`refresh_tokens.revoked_at`)
+- [x] `POST /auth/logout` — blacklist access token (`JWTAuth::parseToken()->invalidate()`) + revoke refresh token; hapus cookie jadi tanggung jawab Route Handler Next.js (belum dikerjakan)
+- [x] `POST /auth/forgot-password`, `POST /auth/reset-password` — Password broker bawaan Laravel, tautan diarahkan ke `web/app/(auth)/reset-password`, tidak membocorkan status pendaftaran email
+- [x] `GET /auth/me`
+- [x] Lockout 15 menit setelah 10 kegagalan login berturut-turut (`RateLimiter`, key `login-lockout:{email}`)
+- [x] Middleware RBAC (`user`/`health_worker`/`admin`/`super_admin`) — `EnsureUserHasRole` (alias `role:`) + Gate `access-admin`/`access-super-admin` di `AppServiceProvider`
+- [x] Password di-hash bcrypt cost 12 (`BCRYPT_ROUNDS=12`, cast `hashed` di kolom `password_hash`)
+
+Diuji lewat 32 test PHPUnit (`tests/Feature/Auth/*`) + verifikasi manual end-to-end terhadap stack Docker sungguhan (bukan hanya sqlite in-memory test). Dua bug nyata ditemukan & diperbaiki selama proses ini: `revoked_at` tidak masuk daftar `Fillable` model (rotasi refresh token diam-diam gagal), dan guard default `web` menyebabkan `$request->user()` selalu null di balik middleware `auth:api` (diperbaiki dengan menjadikan `api` guard default — lihat `config/auth.php`).
 
 **Frontend**
 - [x] Halaman `/masuk`, `/daftar`, `/lupa-password`, `/reset-password` — form react-hook-form + Zod (PRD §6.1), memanggil `/auth/*` sungguhan lewat `lib/api-client.ts` (belum ada endpoint di backend, jadi saat ini menampilkan galat 404 dari Laravel — sudah diverifikasi bentuk galatnya sesuai §11.1)
