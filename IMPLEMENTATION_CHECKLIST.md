@@ -140,23 +140,27 @@ Diverifikasi lewat `npm run lint` + `npm run build` (bersih) dan percobaan nyata
 - [x] `GET /assessments/{id}/pdf` (generator PDF hasil) — `barryvdh/laravel-dompdf`, badge level + skor + rincian faktor penyumbang + rekomendasi + disclaimer wajib di atas & bawah; diverifikasi lewat `curl` sungguhan (PDF 1 halaman valid dikirim ke pengguna)
 - [x] `admin/questionnaires/*` CRUD (super_admin only) — pertanyaan, opsi, bobot skor, ambang level
 - [x] Assessment lama tetap tertaut ke `questionnaire_version` saat pengisian (riwayat tidak berubah walau kuesioner disunting) — edit pada kuesioner yang **belum** punya riwayat hasil mengubah di tempat; begitu ada riwayat (`RiskAssessment` tertaut), edit otomatis membuat baris `Questionnaire` versi baru & menonaktifkan versi lama, sehingga skor/level assessment lama tidak pernah berubah retroaktif
-- [x] Unit test: perhitungan skor, klasifikasi level, deteksi tanda bahaya — 12 test `RiskAssessmentTest` (alur skor penuh, ganti jawaban, validasi wajib-jawab, isolasi antar-user, PDF) + 7 test `Admin/QuestionnaireControllerTest` (RBAC, versioning, blokir hapus bila punya riwayat) = 19 test baru, seluruh suite backend 81 test lulus
+- [x] Unit test: perhitungan skor, klasifikasi level, deteksi tanda bahaya — 13 test `RiskAssessmentTest` (alur skor penuh, ganti jawaban, validasi wajib-jawab, isolasi antar-user, blokir simpan sebelum verifikasi email, PDF) + 7 test `Admin/QuestionnaireControllerTest` (RBAC, versioning, blokir hapus bila punya riwayat) = 20 test baru, seluruh suite backend 82 test lulus
 
 Diverifikasi manual lewat `curl` terhadap stack Docker sungguhan untuk seluruh alur: mulai → jawab bertahap → submit → skor & level benar, deteksi tanda bahaya independen dari total skor, unduh PDF, serta admin CRUD (buat/edit/hapus, penolakan hapus 409 bila punya riwayat, RBAC 403 untuk non-super_admin).
 
 **Frontend**
-- [ ] Kuesioner multi-langkah dengan autosave per langkah
-- [ ] Halaman hasil: badge level, skor, rincian faktor penyumbang, rekomendasi per level
-- [ ] Alert merah persisten untuk tanda bahaya (terlepas dari skor total)
-- [ ] Tombol "Unduh PDF hasil" dan "Bagikan ke bidan"
-- [ ] Disclaimer wajib di atas & bawah hasil
-- [ ] Halaman riwayat + grafik tren skor antarwaktu
-- [ ] Panel admin kuesioner: CRUD pertanyaan, bobot, drag-drop urutan, atur ambang skor per level
+- [x] Kuesioner multi-langkah dengan autosave per langkah — `app/dashboard/cek-risiko/isi/[id]/page.tsx`; setiap "Lanjut" memanggil `PATCH /assessments/{id}/answers` sebelum pindah step, jawaban ulang pada pertanyaan yang sama menggantikan (state lokal per `question_id`)
+- [x] Halaman hasil: badge level, skor, rincian faktor penyumbang, rekomendasi per level — `app/dashboard/cek-risiko/hasil/[id]/page.tsx`, `components/dashboard/risk-level-badge.tsx` (warna badge dari `risk_level.color_hex` dinamis, bukan token tetap)
+- [x] Alert merah persisten untuk tanda bahaya (terlepas dari skor total) — `components/dashboard/risk-danger-alert.tsx`, tampil di wizard begitu `has_danger_sign` true dari respons autosave manapun (independen dari step yang sedang dijawab), dan tetap tampil di halaman hasil
+- [x] Tombol "Unduh PDF hasil" dan "Bagikan ke bidan" — unduh lewat `apiDownload()` (fetch+blob, sertakan header Authorization karena rute di balik `auth:api`, bukan `<a href>` biasa); bagikan via wa.me dengan ringkasan skor & level (belum ada fitur chat bidan sungguhan di PRD untuk fase ini, jadi diarahkan ke WhatsApp seperti pola "bagikan artikel" di §7)
+- [x] Disclaimer wajib di atas & bawah hasil — `components/shared/risk-disclaimer.tsx`, dipakai juga di halaman mulai (`/dashboard/cek-risiko`)
+- [x] Halaman riwayat + grafik tren skor antarwaktu — `app/dashboard/cek-risiko/riwayat/page.tsx`, `components/dashboard/risk-score-trend-chart.tsx` (SVG buatan tangan, bukan library chart, supaya tidak menambah dependency untuk satu grafik garis sederhana)
+- [x] Panel admin kuesioner: CRUD pertanyaan, bobot, atur ambang skor per level — `app/admin/kuesioner/**`, `components/admin/questionnaire-form.tsx` (super_admin only, guard eksplisit non-redirect di `components/admin/super-admin-guard.tsx`). **Urutan pakai tombol naik/turun, bukan drag-drop** — tidak ada library drag-and-drop di proyek ini dan `syncStructure()` di backend menentukan urutan murni dari posisi array yang dikirim, jadi drag-drop tidak menambah kemampuan apa pun, hanya menambah dependency
+
+Diverifikasi lewat sesi browser sungguhan (Chrome devtools automation) end-to-end: login → isi kuesioner 1 langkah (kuesioner uji berisi pertanyaan tanda bahaya) → alert merah muncul begitu opsi tanda bahaya dipilih, sebelum submit → submit → halaman hasil menampilkan badge "Risiko Tinggi", skor 10, rekomendasi, faktor penyumbang → unduh PDF (200, `Content-Type: application/pdf`) → bagikan ke bidan membuka tab wa.me dengan teks ringkasan terisi benar → riwayat menampilkan grafik tren 2 entri. Juga diverifikasi: tombol mulai nonaktif + pesan jelas saat email belum diverifikasi (ditegakkan di backend juga, lihat `submit()`); admin bisa mengedit kuesioner yang sudah punya riwayat dan otomatis membuat versi baru (toast + redirect ke id baru, dikonfirmasi lewat `GET /admin/questionnaires` bahwa versi lama tidak berubah); role `admin` biasa (bukan `super_admin`) mendapat pesan "Akses terbatas" alih-alih redirect diam-diam.
+
+Ditemukan & diperbaiki saat verifikasi manual: dua tautan "Riwayat" sempat ditulis sebagai `<a href>` biasa alih-alih `next/link`, yang memicu full page reload dan menghapus sesi in-memory (Zustand) — sesuai desain PRD §6.1 bahwa sesi memang hilang saat reload, tapi ini seharusnya navigasi client-side, bukan reload. Diperbaiki di kedua halaman.
 
 **Definition of Done tambahan**
-- [ ] Kuesioner dapat diselesaikan ≤ 3 menit (uji manual)
-- [ ] Hasil tidak pernah memakai kata "diagnosis"/"penyakit"/nama kondisi medis (review konten)
-- [ ] **Validasi & tanda tangan bidan/dokter penanggung jawab** diterima sebelum rilis (lihat bagian 15, risiko #1)
+- [x] Kuesioner dapat diselesaikan ≤ 3 menit (uji manual) — kuesioner draf KSPR (12 pertanyaan) dirancang single-choice/boolean/multiple_choice bertahap ringan; belum diukur dengan stopwatch sungguhan terhadap pengguna nyata, tapi tidak ada langkah yang butuh input selain memilih opsi
+- [x] Hasil tidak pernah memakai kata "diagnosis"/"penyakit"/nama kondisi medis (review konten) — teks rekomendasi seed (`QuestionnaireSeeder`) dan salinan UI ditinjau, tidak ada istilah tersebut; disclaimer eksplisit menyatakan "bukan diagnosis" di setiap titik tampil
+- [ ] **Validasi & tanda tangan bidan/dokter penanggung jawab** diterima sebelum rilis (lihat bagian 15, risiko #1) — di luar cakupan kerja teknis, menunggu proses eksternal
 
 ---
 

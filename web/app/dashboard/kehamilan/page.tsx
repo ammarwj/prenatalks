@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Calculator, Loader2, ShieldCheck } from "lucide-react";
 
 import { PregnancyForm } from "@/components/dashboard/pregnancy-form";
 import { PregnancyHistoryList } from "@/components/dashboard/pregnancy-history-list";
@@ -42,13 +43,31 @@ export default function DataKehamilanPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-extrabold text-foreground">
-          Data Kehamilan
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Lengkapi data ini agar kalkulator dan cek risiko lebih akurat untuk Anda.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-extrabold text-foreground">
+            Data Kehamilan
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Lengkapi data ini agar kalkulator dan cek risiko lebih akurat untuk Anda.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/dashboard/kalkulator"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <Calculator className="size-4" />
+            Buka Kalkulator
+          </Link>
+          <Link
+            href="/dashboard/cek-risiko"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <ShieldCheck className="size-4" />
+            Cek Risiko
+          </Link>
+        </div>
       </div>
 
       {loadError && (

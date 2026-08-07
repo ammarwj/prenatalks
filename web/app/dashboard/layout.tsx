@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, MailWarning } from "lucide-react";
+import { LayoutDashboard, LogOut, MailWarning } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -48,6 +49,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
                 {user.name}
               </span>
+            )}
+            {user && (user.role === "admin" || user.role === "super_admin") && (
+              <Button asChild type="button" variant="ghost" size="sm" className="gap-1.5">
+                <Link href="/admin">
+                  <LayoutDashboard className="size-4" />
+                  Panel Admin
+                </Link>
+              </Button>
             )}
             <Button
               type="button"

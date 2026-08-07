@@ -27,7 +27,7 @@ type ApiError = {
  * refresh juga gagal, sesi lokal dihapus dan pengguna diarahkan ke /masuk.
  */
 async function apiRequest<T>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
   isRetry = false
@@ -81,3 +81,36 @@ async function apiRequest<T>(
 export const apiGet = <T>(path: string) => apiRequest<T>("GET", path);
 export const apiPost = <T>(path: string, body?: unknown) => apiRequest<T>("POST", path, body);
 export const apiPut = <T>(path: string, body?: unknown) => apiRequest<T>("PUT", path, body);
+export const apiPatch = <T>(path: string, body?: unknown) => apiRequest<T>("PATCH", path, body);
+export const apiDelete = <T>(path: string) => apiRequest<T>("DELETE", path);
+
+/**
+ * Endpoint PDF (`GET /assessments/{id}/pdf`) mengembalikan berkas biner, bukan
+ * amplop JSON standar, jadi tidak lewat `apiRequest` — tapi tetap perlu header
+ * Authorization yang sama karena rutenya di balik `auth:api`.
+ */
+export async function apiDownload(path: string, filename: string): Promise<void> {
+  const { accessToken } = useAuthStore.getState();
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+
+  if (!response.ok) {
+    let message = `Gagal mengunduh berkas (${response.status})`;
+    try {
+      const payload = (await response.json()) as ApiError;
+      message = payload.message ?? message;
+    } catch {
+      // respons bukan JSON — pertahankan pesan generik di atas
+    }
+    throw new ApiRequestError(message, response.status);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

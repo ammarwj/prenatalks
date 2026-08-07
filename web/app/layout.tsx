@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 
+import { Toaster } from "@/components/ui/sonner";
+
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-display",
   subsets: ["latin"],
@@ -28,7 +30,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       className={`${plusJakartaSans.variable} ${nunitoSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-body">{children}</body>
+      <body className="min-h-full flex flex-col font-body">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
