@@ -269,3 +269,73 @@ export type AdminFormExport = {
   expires_at: string | null;
   created_at: string;
 };
+
+/** PRD §9 F-08 — Artikel. */
+export type LifeStage = "preconception" | "pregnancy" | "birth" | "postpartum" | "parenting";
+export type ArticleStatus = "draft" | "published";
+
+export type Category = {
+  id: number;
+  name: string;
+  slug: string;
+  type: "article" | "video" | "faq";
+};
+
+export type ArticleSummary = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  cover_url: string | null;
+  category: { id: number; name: string; slug: string } | null;
+  life_stage: LifeStage;
+  trimester: number | null;
+  reading_minutes: number | null;
+  published_at: string | null;
+};
+
+export type Article = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  cover_url: string | null;
+  category: { id: number; name: string; slug: string } | null;
+  life_stage: LifeStage;
+  trimester: number | null;
+  author: { name: string } | null;
+  source_reference: string;
+  reviewed_at: string;
+  reading_minutes: number | null;
+  views_count: number;
+  published_at: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  related: ArticleSummary[];
+};
+
+export type AdminArticle = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  cover_url: string | null;
+  category: { id: number; name: string } | null;
+  category_id: number | null;
+  trimester: number | null;
+  author: { id: number; name: string } | null;
+  life_stage: LifeStage;
+  source_reference: string;
+  reviewed_at: string;
+  status: ArticleStatus;
+  is_scheduled: boolean;
+  published_at: string | null;
+  views_count: number;
+  reading_minutes: number | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  created_at: string;
+  updated_at: string;
+};

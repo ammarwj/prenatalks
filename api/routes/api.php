@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
+use App\Http\Controllers\Api\V1\ArticleController;
 use App\Http\Controllers\Api\V1\AssessmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CalculatorController;
+use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\PregnancyController;
@@ -15,6 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', HealthController::class);
 
 Route::post('/calculator', CalculatorController::class);
+
+Route::get('/articles', [ArticleController::class, 'index']);
+Route::get('/articles/{slug}', [ArticleController::class, 'show']);
+Route::get('/categories', [CategoryController::class, 'index']);
 
 // Publik/login sesuai konfigurasi tiap form — dicek di dalam controller,
 // bukan lewat middleware 'auth:api', karena aksesnya bergantung pada
@@ -40,6 +47,8 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {
+        Route::apiResource('articles', AdminArticleController::class);
+
         Route::apiResource('forms', AdminFormController::class);
 
         Route::get('/forms/{form}/submissions', [AdminFormController::class, 'submissions']);

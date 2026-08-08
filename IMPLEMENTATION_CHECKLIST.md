@@ -209,20 +209,26 @@ Ditemukan & diperbaiki saat verifikasi manual (Chrome devtools automation): fiel
 ## F-08 · Artikel (P0)
 
 **Backend**
-- [ ] Migrasi `articles`, `categories`
-- [ ] CRUD artikel, slug otomatis, status draft/terbit, jadwal terbit
-- [ ] Upload cover + konversi WebP (Intervention Image)
-- [ ] Full-text search Indonesia (index GIN, lihat bagian 10 indeks)
-- [ ] `GET /articles?life_stage=&category=&trimester=&search=&page=`, `GET /articles/{slug}`
-- [ ] `POST/PUT/DELETE /admin/articles`
-- [ ] Field wajib: `source_reference`, `reviewed_at`, `reviewed_by`
+- [x] Migrasi `articles`, `categories` — sesuai skema §10; indeks GIN full-text di migrasi terpisah (lihat di bawah)
+- [x] CRUD artikel, slug otomatis, status draft/terbit, jadwal terbit — `Admin\ArticleController`, pola `syncFields`-style sama seperti Form/Questionnaire; "jadwal terbit" diwujudkan lewat `Article::isPubliclyVisible()`/`scopePublished()` (status `published` + `published_at` di masa depan otomatis tersembunyi dari publik tanpa perlu job terjadwal terpisah — bukan bagian dari checklist backend F-08 secara literal); resource admin menyertakan `is_scheduled` (computed) untuk UX panel admin
+- [x] Upload cover + konversi WebP (Intervention Image) — `CoverImageService` (GD driver, `scaleDown` maks 1600px + `toWebp` kualitas 82). **Catatan infra:** image PHP di `docker/php/Dockerfile` awalnya dikompilasi tanpa dukungan WebP pada GD (`docker-php-ext-configure gd` tanpa `--with-webp`) — ditambahkan `libwebp-dev` + `--with-webp`, image di-rebuild; tanpa ini `Intervention\Image` gagal dengan `undefined function imagewebp()`
+- [x] Full-text search Indonesia (index GIN, lihat bagian 10 indeks) — migrasi terpisah `CREATE INDEX ... USING GIN (to_tsvector('indonesian', ...))`, dilewati otomatis di SQLite (dipakai saat testing) karena GIN/`to_tsvector` khusus PostgreSQL; `ArticleController::applySearch()` jatuh ke `LIKE` biasa di driver selain `pgsql`
+- [x] `GET /articles?life_stage=&category=&trimester=&search=&page=`, `GET /articles/{slug}` — 12/halaman, `show()` increment `views_count` + menyertakan hingga 3 artikel terkait (kategori sama atau `life_stage` sama)
+- [x] `POST/PUT/DELETE /admin/articles` — admin/super_admin (§5 RBAC); `destroy()` soft-delete (kolom `deleted_at`), cover ikut dihapus dari disk
+- [x] Field wajib: `source_reference`, `reviewed_at`, `reviewed_by` — `reviewed_at` divalidasi tidak boleh di masa depan; `reviewed_by` otomatis diisi ID admin yang menyimpan (bukan input klien)
+
+Kategori (`categories`) sengaja tidak punya CRUD admin terpisah di F-08 — PRD §8 (sitemap) tidak mendaftarkan halaman `/admin/kategori`, jadi disiapkan lewat `CategorySeeder` (6 kategori awal) dan dipilih admin lewat dropdown saat menulis artikel; bisa diperluas jadi CRUD penuh di F-14 bila dibutuhkan nanti. Diuji lewat 20 test baru (`Feature/Admin/ArticleControllerTest` — CRUD, validasi, upload+WebP, jadwal terbit, kategori; `Feature/ArticleTest` — filter/pencarian/pagination/artikel terkait/404) — total suite backend 157 test lulus.
 
 **Frontend**
-- [ ] Editor rich text (TipTap) di panel admin
-- [ ] Daftar publik dengan filter `life_stage`/kategori/trimester, pencarian judul, pagination 12/halaman
-- [ ] Detail artikel: cover, penulis, tanggal, estimasi baca, artikel terkait, tombol bagikan WhatsApp
-- [ ] Sumber rujukan & tanggal tinjauan tampil di bawah isi artikel
-- [ ] SEO: meta title/description, Open Graph, JSON-LD `Article`, sitemap otomatis
+- [x] Editor rich text (TipTap) di panel admin — `components/admin/rich-text-editor.tsx` (Bold/Italic/H2/H3/list/quote/link/undo-redo), isi disimpan sebagai HTML mentah
+- [x] Daftar publik dengan filter `life_stage`/kategori/trimester, pencarian judul, pagination 12/halaman — `app/artikel/page.tsx` (Server Component, ISR `revalidate: 300` lewat `lib/api-server.ts` sesuai PRD §6.1), filter sinkron ke URL query lewat `components/articles/article-filters.tsx`
+- [x] Detail artikel: cover, penulis, tanggal, estimasi baca, artikel terkait, tombol bagikan WhatsApp — `app/artikel/[slug]/page.tsx`
+- [x] Sumber rujukan & tanggal tinjauan tampil di bawah isi artikel — kotak highlight ungu di bawah isi
+- [x] SEO: meta title/description, Open Graph, JSON-LD `Article`, sitemap otomatis — `generateMetadata()` per artikel (fallback ke title/excerpt bila `meta_title`/`meta_description` kosong), `<script type="application/ld+json">` schema.org `Article`, `app/sitemap.ts` (memuat seluruh artikel terbit + halaman statis)
+
+Isi artikel (HTML dari TipTap) disanitasi ulang di titik render lewat `lib/sanitize-html.ts` (`isomorphic-dompurify`, allowlist tag terbatas) sebagai pertahanan berlapis terhadap XSS — tidak sekadar dipercaya karena penulisnya admin. `next.config.ts` menambahkan `images.remotePatterns` (diturunkan dari `NEXT_PUBLIC_API_URL`) supaya `next/image` bisa memuat cover dari backend. Tailwind Typography (`@tailwindcss/typography`) ditambahkan untuk kelas `prose` di editor & tampilan isi artikel.
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end: login admin → tulis artikel (judul, ringkasan, kategori "Nutrisi Kehamilan", trimester 1, isi dengan teks **bold** via toolbar TipTap, sumber rujukan, terbit sekarang) → redirect ke halaman edit dengan data terisi ulang benar dari server → tampil di `/artikel` (kartu, badge kategori, estimasi baca) → detail artikel menampilkan bold rendering benar, kotak sumber rujukan, tombol bagikan WhatsApp → `sitemap.xml` memuat URL artikel dengan `lastmod` benar → unggah cover sungguhan (JPEG 1200×800 dibuat via PIL) → tersimpan sebagai `.webp` (dikonfirmasi lewat query DB + `curl` langsung ke berkas: `Content-Type: image/webp`, ukuran menyusut dari 15 KB ke ~1.7 KB) → `views_count` bertambah saat detail dibuka. Data uji (artikel, user admin, berkas cover) dibersihkan setelahnya.
 
 ---
 

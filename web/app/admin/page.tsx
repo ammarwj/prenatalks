@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, ListChecks } from "lucide-react";
+import { ClipboardList, ListChecks, Newspaper } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -13,6 +13,13 @@ export default function AdminHomePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/artikel"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <Newspaper className="size-4" />
+            Artikel
+          </Link>
           <Link
             href="/admin/kuesioner"
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
