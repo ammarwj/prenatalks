@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ApiRequestError } from "@/lib/api-error";
 import { authLogin } from "@/lib/auth";
+import { landingPathForRole } from "@/lib/auth-routes";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
@@ -34,9 +35,10 @@ export default function MasukPage() {
     try {
       const data = await authLogin(values.email, values.password);
       setSession(data.access_token, data.user);
-      // Ringkasan dashboard (F-13) jadi titik masuk, bukan form data kehamilan —
-      // sesuai sitemap PRD §8 yang menempatkan `/dashboard` sebagai akar area pengguna.
-      router.push("/dashboard");
+      // Tujuan ditentukan role: admin/super_admin ke panel admin, pengguna
+      // biasa ke ringkasan dashboard (F-13) — sesuai sitemap PRD §8 yang
+      // memisahkan `/dashboard` dan `/admin` sebagai dua akar area.
+      router.push(landingPathForRole(data.user.role));
     } catch (err) {
       setServerError(
         err instanceof ApiRequestError ? err.message : "Terjadi kesalahan, coba lagi."

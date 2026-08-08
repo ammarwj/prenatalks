@@ -1,9 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export function Logo({ withTagline = true }: { withTagline?: boolean }) {
+/**
+ * `href` default menunjuk anchor beranda landing page. Area yang bukan
+ * landing (mis. panel admin) mengopernya sendiri supaya logonya menautkan
+ * ke akar area itu, bukan ke anchor yang tidak ada di halaman tersebut.
+ */
+export function Logo({
+  withTagline = true,
+  href = "#beranda",
+}: {
+  withTagline?: boolean;
+  href?: string;
+}) {
   return (
-    <Link href="#beranda" className="flex items-center gap-2.5 shrink-0">
+    <Link href={href} className="flex items-center gap-2.5 shrink-0">
       <Image
         src="/brand/logo.png"
         alt="Logo PrenaTalks"
