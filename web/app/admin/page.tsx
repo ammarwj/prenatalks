@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, ListChecks, Newspaper, Video } from "lucide-react";
+import { ClipboardList, HelpCircle, ListChecks, Newspaper, Video } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -26,6 +26,13 @@ export default function AdminHomePage() {
           >
             <Video className="size-4" />
             Video
+          </Link>
+          <Link
+            href="/admin/faq"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <HelpCircle className="size-4" />
+            FAQ
           </Link>
           <Link
             href="/admin/kuesioner"

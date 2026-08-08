@@ -382,3 +382,23 @@ export type AdminVideo = {
   created_at: string;
   updated_at: string;
 };
+
+/** PRD §9 F-10 — FAQ. */
+export type Faq = {
+  id: number;
+  question: string;
+  answer: string;
+  category: { id: number; name: string } | null;
+};
+
+export type AdminFaq = {
+  id: number;
+  question: string;
+  answer: string;
+  category: { id: number; name: string } | null;
+  category_id: number | null;
+  order_index: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};

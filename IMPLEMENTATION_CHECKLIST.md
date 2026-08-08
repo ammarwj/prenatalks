@@ -254,14 +254,18 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 ## F-10 · FAQ (P0)
 
 **Backend**
-- [ ] Migrasi `faqs`
-- [ ] CRUD (pertanyaan, jawaban, kategori, urutan)
-- [ ] `GET /faqs`
+- [x] Migrasi `faqs` — `question`, `answer`, `category_id` (nullable, `nullOnDelete`, memakai tabel `categories` yang sudah ada dengan `type='faq'`), `order_index`, `is_published`, index `[is_published, order_index]`
+- [x] CRUD (pertanyaan, jawaban, kategori, urutan) — `Admin\FaqController` (index/store/update/destroy) + endpoint `reorder` khusus; `store()` otomatis menambahkan `order_index` baru di akhir daftar (`max(order_index) + 10`), pola gap-10 yang sama dipakai F-05/F-06/F-08/F-09
+- [x] `GET /faqs` — publik, hanya `is_published=true`, terurut `order_index`, memuat relasi `category`
 
 **Frontend**
-- [ ] Accordion per kategori + pencarian
-- [ ] Drag & drop urutan di panel admin
-- [ ] JSON-LD `FAQPage`
+- [x] Accordion per kategori + pencarian — `components/faq/faq-accordion.tsx` (Client Component), filter pencarian sisi klien pada pertanyaan+jawaban lalu dikelompokkan per nama kategori; item tanpa kategori masuk grup "Lainnya" (bukan "Umum") supaya tidak tercampur secara semu dengan kategori nyata bernama "Umum"
+- [x] Drag & drop urutan di panel admin — `@dnd-kit/core` + `@dnd-kit/sortable` dipasang khusus untuk fitur ini (PRD eksplisit menyebut "drag & drop", berbeda dari F-05 yang memakai tombol naik/turun); `PointerSensor` (activationConstraint jarak 5px) + `KeyboardSensor` (`sortableKeyboardCoordinates`) supaya bisa diakses via keyboard (spasi untuk angkat/taruh, panah untuk pindah). Endpoint `PATCH /admin/faqs/reorder` didaftarkan **sebelum** `Route::apiResource` agar tidak tertangkap sebagai parameter `{faq}`
+- [x] JSON-LD `FAQPage` — di-render di `app/faq/page.tsx` (Server Component, ISR 5 menit) lewat `<script type="application/ld+json">`, `mainEntity` memetakan tiap FAQ terbit ke `Question`/`acceptedAnswer` sesuai schema.org
+
+Backend diuji lewat 12 test baru (`Feature/Admin/FaqControllerTest` — RBAC admin/super_admin, CRUD, validasi, auto-append `order_index`, reorder persist, reorder menolak ID tak dikenal; `Feature/FaqTest` — publik hanya menampilkan yang terbit, terurut benar) — total suite backend 196 test lulus, Pint bersih.
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end: login admin → tambah 2 FAQ (dengan & tanpa kategori) → tersimpan dan tampil sebagai kartu yang bisa diseret. Percobaan drag via mouse (`left_click_drag`) tidak berhasil memicu drag dnd-kit (keterbatasan simulasi pointer-event pada tooling otomasi, bukan bug kode); percobaan lewat keyboard sensor berhasil setelah memakai nama tombol penuh (`"ArrowDown"`, bukan `"Down"`) — urutan dua kartu bertukar di layar dan `read_network_requests` mengonfirmasi `PATCH /admin/faqs/reorder` terkirim dengan status 200. Halaman publik `/faq` dicek: accordion terkelompok per kategori dengan urutan sesuai `order_index`, pencarian "kata sandi" menyaring dengan benar ke grup "Lainnya", accordion bisa dibuka/tutup, dan `curl` ke HTML mengonfirmasi tag `<script type="application/ld+json">` berisi `FAQPage` dengan `mainEntity` yang benar. Data uji (2 FAQ + user admin uji) dibersihkan setelahnya.
 
 ---
 
