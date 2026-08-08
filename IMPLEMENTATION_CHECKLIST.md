@@ -392,13 +392,30 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 ## F-16 · Halaman Tentang (P0)
 
 **Backend**
-- [ ] Konten seksi 1–5 (filosofi nama, sejarah, komitmen, logo, warna) disimpan di `settings` (dapat disunting tanpa deploy ulang)
-- [ ] CRUD profil tim (foto, nama, peran, deskripsi, urutan)
+- [x] Konten seksi 1–5 disimpan di `settings` — 8 kunci baru di kelompok `about` (`about_name_philosophy`, `about_history_intro`, `about_milestones`, `about_commitment_heading`, `about_commitment_body`, `about_logo_philosophy`, `about_color_purple_meaning`, `about_color_teal_meaning`), memakai ulang mesin `Setting` dari F-12. Kelompok `about` didaftarkan ke `PUBLIC_GROUPS` supaya halaman publik bisa membacanya tanpa login
+- [x] CRUD profil tim — migrasi `team_members` + `Admin\TeamMemberController` (CRUD + `reorder` drag & drop) dan `GET /team-members` publik. Foto memakai ulang `CoverImageService` (F-08) dengan direktori `team/`, jadi konversi WebP-nya sama tanpa duplikasi kode
+
+**Tabel baru di luar skema PRD.** `team_members` tidak ada di §10, tapi diminta kriteria terima F-16 ("Profil tim dikelola lewat panel admin"). Selain field yang disebut checklist, ditambahkan `credential` — PRD §9 F-16 seksi 6 meminta "khusus tenaga kesehatan: nama profesi dan STR bila relevan, karena ini yang membuat klaim 'berbasis bukti' dapat diverifikasi". Ada juga `is_published` supaya profil bisa disembunyikan tanpa dihapus, sejalan dengan pola F-10/F-11.
+
+**Warna merek dikunci di kode.** `Setting::BRAND_COLORS` menyimpan `#7C3AED` dan `#14B8A6` sebagai konstanta, bukan setting yang bisa disunting — PRD §1.4 menyatakan keduanya warna resmi logo yang "tidak boleh diubah". Yang bisa disunting admin hanya teks maknanya. Nilai hex tetap dikirim lewat `meta.brand_colors` agar halaman Tentang tidak menulis ulang kode warnanya sebagai literal kedua yang bisa menyimpang.
+
+Nilai bawaan seksi 1–5 diambil dari PRD §1 (identitas merek) lewat `Setting::defaults()`, jadi halaman langsung berisi dan admin tinggal menyunting alih-alih mengarang dari nol.
+
+Diuji lewat 18 test baru (`Feature/AboutPageTest` — 7 test: isi Tentang terbaca tanpa login, filosofi nama terpecah tiga bagian, tonggak sebagai list, warna merek dari kode bukan dari `settings`, profil tim hanya yang terbit & terurut, kualifikasi terekspos publik, foto kosong mengembalikan null; `Feature/Admin/TeamMemberControllerTest` — 11 test: RBAC, CRUD, wajib nama & peran, foto tersimpan sebagai WebP di `team/`, unggahan non-gambar ditolak, hapus foto lewat update, sembunyikan profil, hapus profil ikut menghapus berkas fotonya, reorder, penolakan ID tak dikenal) — total suite backend 304 test lulus, Pint bersih.
+
+Dua test F-12 ikut disesuaikan: keduanya memaku daftar `PUBLIC_GROUPS` persis `['community']`. Ditulis ulang jadi pernyataan maksudnya ("kelompok `mail` tidak publik", "`community` termasuk publik") supaya menambah kelompok publik baru tidak memaksa test diubah tiap kali.
 
 **Frontend**
-- [ ] `/tentang` — 7 seksi sesuai urutan bagian 9 (F-16)
-- [ ] Render statis (SSG)
-- [ ] Metadata Open Graph dengan logo penuh warna
+- [x] `/tentang` — 7 seksi sesuai urutan PRD §9 F-16: filosofi nama (3 kartu), sejarah (pengantar + timeline), komitmen (blok ungu besar), filosofi logo (logo + keterangan), filosofi warna (dua blok warna), profil tim, dan CTA gradien ke `/daftar` & `/komunitas`
+- [x] Render statis — PRD meminta "SSG" **sekaligus** "dapat disunting admin tanpa deploy ulang"; dua hal itu hanya bisa berjalan bersama lewat ISR, jadi halaman ini statis dengan revalidasi 5 menit seperti `/faq` dan `/komunitas`
+- [x] Metadata Open Graph dengan logo penuh warna — `openGraph.images` menunjuk `/brand/logo.png`
+- [x] Panel admin `/admin/tentang` — form seksi 1–5 (dengan `useFieldArray` untuk tonggak sejarah, maks 12) digabung dengan CRUD profil tim beserta unggah foto dan drag & drop urutan. Seksi 5 menampilkan swatch warna read-only beserta ikon gembok dan penjelasan kenapa hex-nya tidak bisa disunting
+
+Tautan "Tentang PrenaTalks" dan "Tim Ahli" di footer yang sebelumnya `href="#tentang"` kini menunjuk `/tentang`.
+
+**Bug Next.js 16 yang ditemukan (memengaruhi F-08 & F-09 juga).** Foto profil tampil sebagai gambar rusak di lokal meski berkasnya benar (dikonfirmasi `Content-Type: image/webp`, 17 KB JPEG → 4,4 KB WebP). Penyebabnya bukan `remotePatterns` — pola itu cocok saat diuji langsung — melainkan `images.dangerouslyAllowLocalIP` yang **baru ada di Next 16 dan bawaannya `false`**: optimizer menolak mengoptimalkan gambar dari IP lokal sebagai perlindungan SSRF, dengan pesan menyesatkan `"url" parameter is not allowed`. Ini bukan masalah produksi (API di host publik), tapi di lokal membuat cover artikel (F-08), thumbnail video (F-09), dan foto tim ikut rusak — F-08/F-09 sebelumnya hanya diverifikasi lewat `curl` langsung ke berkas, bukan lewat rendering `next/image`, sehingga luput. Diperbaiki di `next.config.ts` dengan mengaktifkan flag itu **hanya bila host API lokal dan bukan build produksi**.
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end: `/tentang` menampilkan ketujuh seksi dengan isi dari seeder — tiga kartu Pre/Natal/Talks, timeline 2020→2022→2026, blok komitmen "Empowerment Women's Health", logo beserta keterangannya, dua blok warna dengan hex `#7C3AED`/`#14B8A6`, dan CTA → login admin → `/admin/tentang` memuat seluruh nilai berjalan, seksi 5 tampil terkunci dengan swatch read-only → tambah profil tim (nama, peran, kualifikasi "Bidan · STR 1234567890", deskripsi) beserta unggah foto JPEG sungguhan → tersimpan sebagai `.webp` di `storage/team/` dan tampil sebagai avatar bulat di panel admin maupun di `/tentang` lengkap dengan badge kualifikasi. Data uji (1 profil tim + fotonya, user admin uji, baris audit) dibersihkan setelahnya.
 
 ---
 

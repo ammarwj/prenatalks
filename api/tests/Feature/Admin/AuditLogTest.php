@@ -194,7 +194,7 @@ class AuditLogTest extends TestCase
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
         $headers = $this->authHeader($superAdmin);
 
-        foreach (['Pertama', 'Kedua'] as $index => $question) {
+        foreach (['Pertama', 'Kedua'] as $question) {
             $this->withHeaders($headers)->postJson('/api/v1/admin/faqs', [
                 'question' => $question, 'answer' => 'Jawaban', 'is_published' => false,
             ]);

@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  *
  * Model boleh meng-override `auditIgnore()` untuk kolom yang berubah rutin
  * dan tidak bernilai sebagai jejak (mis. `last_login_at`).
+ *
+ * @mixin Model
  */
 trait Auditable
 {

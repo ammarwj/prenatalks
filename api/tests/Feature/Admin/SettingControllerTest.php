@@ -46,7 +46,7 @@ class SettingControllerTest extends TestCase
             Setting::defaults()['community_heading'],
             $response->json('data.community_heading')
         );
-        $this->assertSame(['community'], $response->json('meta.public_groups'));
+        $this->assertContains('community', $response->json('meta.public_groups'));
     }
 
     public function test_admin_can_save_community_settings(): void

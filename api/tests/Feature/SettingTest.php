@@ -55,7 +55,10 @@ class SettingTest extends TestCase
 
         $response->assertOk();
         $this->assertArrayNotHasKey('smtp_password', $response->json('data'));
-        $this->assertSame(['community'], Setting::PUBLIC_GROUPS);
+        // Ditulis sebagai "kelompok ini tidak publik", bukan daftar persis,
+        // supaya menambah kelompok publik baru (mis. `about` di F-16) tidak
+        // memaksa test ini diubah tiap kali.
+        $this->assertNotContains('mail', Setting::PUBLIC_GROUPS);
     }
 
     public function test_rules_are_stored_as_a_list_not_a_string(): void

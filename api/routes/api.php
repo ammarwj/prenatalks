@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Api\V1\Admin\TeamMemberController as AdminTeamMemberController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\Api\V1\ArticleController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\PregnancyController;
 use App\Http\Controllers\Api\V1\QuestionnaireController;
 use App\Http\Controllers\Api\V1\SettingController;
+use App\Http\Controllers\Api\V1\TeamMemberController;
 use App\Http\Controllers\Api\V1\VideoController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,8 +40,9 @@ Route::get('/videos/{slug}', [VideoController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
 
-// Hanya kelompok di Setting::PUBLIC_GROUPS — dipakai halaman /komunitas.
+// Hanya kelompok di Setting::PUBLIC_GROUPS — dipakai halaman /komunitas & /tentang.
 Route::get('/settings', [SettingController::class, 'index']);
+Route::get('/team-members', [TeamMemberController::class, 'index']);
 
 // Publik/login sesuai konfigurasi tiap form — dicek di dalam controller,
 // bukan lewat middleware 'auth:api', karena aksesnya bergantung pada
@@ -96,6 +99,10 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('/settings', [AdminSettingController::class, 'index']);
         Route::put('/settings', [AdminSettingController::class, 'update']);
+
+        // Alasan urutan sama seperti FAQ & item checklist di atas.
+        Route::patch('/team-members/reorder', [AdminTeamMemberController::class, 'reorder']);
+        Route::apiResource('team-members', AdminTeamMemberController::class);
 
         Route::apiResource('forms', AdminFormController::class);
 

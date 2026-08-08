@@ -11,8 +11,8 @@ import {
 import { NAV_ITEMS } from "@/lib/nav-items";
 
 const ABOUT_LINKS = [
-  { label: "Tentang PrenaTalks", href: "#tentang" },
-  { label: "Tim Ahli", href: "#tentang" },
+  { label: "Tentang PrenaTalks", href: "/tentang" },
+  { label: "Tim Ahli", href: "/tentang" },
   { label: "Kebijakan Privasi", href: "#" },
   { label: "Syarat & Ketentuan", href: "#" },
 ];

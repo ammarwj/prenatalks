@@ -21,6 +21,12 @@ class SettingController extends Controller
 
     public function index()
     {
-        return $this->success(Setting::valuesForGroups(Setting::PUBLIC_GROUPS));
+        return $this->success(
+            Setting::valuesForGroups(Setting::PUBLIC_GROUPS),
+            // Warna merek dikunci di kode (PRD §1.4), tapi tetap dikirim dari
+            // sini supaya halaman Tentang tidak menulis ulang kode hex-nya
+            // sebagai literal kedua yang bisa menyimpang.
+            meta: ['brand_colors' => Setting::BRAND_COLORS]
+        );
     }
 }

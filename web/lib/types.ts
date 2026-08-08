@@ -543,3 +543,37 @@ export type PaginationMeta = {
   total: number;
   last_page: number;
 };
+
+/** PRD §9 F-16 — isi halaman Tentang seksi 1–5, dari tabel `settings`. */
+export type AboutSettings = {
+  about_name_philosophy: { term: string; meaning: string }[];
+  about_history_intro: string;
+  about_milestones: { year: string; title: string; description: string | null }[];
+  about_commitment_heading: string;
+  about_commitment_body: string;
+  about_logo_philosophy: string;
+  about_color_purple_meaning: string;
+  about_color_teal_meaning: string;
+};
+
+/** Warna merek dikunci di backend (PRD §1.4), dikirim lewat `meta`. */
+export type BrandColors = { purple: string; teal: string };
+
+export type PublicSettings = CommunitySettings & AboutSettings;
+
+/** PRD §9 F-16 seksi 6 — profil tim. */
+export type TeamMember = {
+  id: number;
+  name: string;
+  role_title: string;
+  credential: string | null;
+  description: string | null;
+  photo_url: string | null;
+};
+
+export type AdminTeamMember = TeamMember & {
+  order_index: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
