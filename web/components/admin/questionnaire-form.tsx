@@ -42,6 +42,10 @@ import {
 
 const inputClass = "h-11 rounded-xl";
 
+/** Sama dengan aturan `color_hex` di lib/validations/questionnaire.ts. */
+const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+const FALLBACK_COLOR = "#E11D48";
+
 export function QuestionnaireForm({
   initialData,
   onSaved,
@@ -421,7 +425,6 @@ function RiskLevelCard({
   onRemove: () => void;
 }) {
   const levelErrors = errors.risk_levels?.[index];
-  const colorValue = useWatch({ control, name: `risk_levels.${index}.color_hex` });
 
   return (
     <div className="space-y-4 rounded-2xl border border-border p-4">
@@ -453,20 +456,38 @@ function RiskLevelCard({
           label="Warna badge"
           htmlFor={`risk_levels.${index}.color_hex`}
           error={levelErrors?.color_hex?.message}
-          hint="Format #RRGGBB"
+          hint="Klik lingkarannya untuk memilih warna, atau ketik sendiri kode #RRGGBB"
         >
-          <div className="flex items-center gap-2">
-            <span
-              className="size-8 shrink-0 rounded-full border border-border"
-              style={{ backgroundColor: colorValue || "transparent" }}
-            />
-            <Input
-              id={`risk_levels.${index}.color_hex`}
-              className={inputClass}
-              placeholder="#E11D48"
-              {...register(`risk_levels.${index}.color_hex`)}
-            />
-          </div>
+          <Controller
+            control={control}
+            name={`risk_levels.${index}.color_hex`}
+            render={({ field }) => (
+              <div className="flex items-center gap-2">
+                {/* Pemilih warna bawaan browser — dirender sebagai lingkaran
+                    swatch. Nilainya wajib #rrggbb, jadi selagi kotak teks
+                    masih setengah diketik dipakai warna cadangan supaya
+                    kontrolnya tidak melompat sendiri ke hitam. */}
+                <input
+                  type="color"
+                  aria-label="Pilih warna badge"
+                  value={HEX_COLOR_PATTERN.test(field.value) ? field.value : FALLBACK_COLOR}
+                  onChange={(event) => field.onChange(event.target.value.toUpperCase())}
+                  className="size-8 shrink-0 cursor-pointer rounded-full border border-border bg-transparent p-0 [&::-moz-color-swatch]:rounded-full [&::-moz-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch-wrapper]:p-0"
+                />
+                <Input
+                  id={`risk_levels.${index}.color_hex`}
+                  className={inputClass}
+                  placeholder="#E11D48"
+                  aria-invalid={!!levelErrors?.color_hex}
+                  name={field.name}
+                  ref={field.ref}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              </div>
+            )}
+          />
         </FormField>
         <FormField
           label="Skor minimum"
