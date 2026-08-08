@@ -339,3 +339,46 @@ export type AdminArticle = {
   created_at: string;
   updated_at: string;
 };
+
+/** PRD §9 F-09 — Video Edukasi. */
+export type VideoSummary = {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnail_url: string;
+  category: { id: number; name: string } | null;
+  duration_seconds: number | null;
+  published_at: string | null;
+};
+
+export type VideoDetail = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  embed_url: string;
+  thumbnail_url: string;
+  category: { id: number; name: string; slug: string } | null;
+  life_stage: LifeStage;
+  duration_seconds: number | null;
+  published_at: string | null;
+};
+
+export type AdminVideo = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  youtube_id: string;
+  embed_url: string;
+  thumbnail_url: string;
+  category: { id: number; name: string } | null;
+  category_id: number | null;
+  duration_seconds: number | null;
+  life_stage: LifeStage;
+  status: ArticleStatus;
+  is_scheduled: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};

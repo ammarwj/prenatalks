@@ -235,15 +235,19 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 ## F-09 · Video Edukasi (P0)
 
 **Backend**
-- [ ] Migrasi `videos`
-- [ ] CRUD video, validasi URL YouTube saat simpan
-- [ ] `GET /videos`, `GET /videos/{slug}`, `POST/PUT/DELETE /admin/videos`
+- [x] Migrasi `videos` — sesuai skema §10 (soft delete, indeks `status`+`published_at`); tidak ada `source_reference`/`reviewed_at` seperti artikel karena memang tidak ada di skema video
+- [x] CRUD video, validasi URL YouTube saat simpan — `Admin\VideoController` (pola sama seperti `Admin\ArticleController`: slug auto-unik, jadwal terbit via `scopePublished()`, `is_scheduled` computed); `App\Services\YoutubeUrlParser::extractId()` mendukung format `watch?v=`, `youtu.be/`, `embed/`, `shorts/`, `youtube-nocookie.com`, URL mobile (`m.youtube.com`), dan ID mentah — divalidasi lewat closure rule di `AdminVideoRequest` dengan pesan jelas bila tidak dikenali
+- [x] `GET /videos`, `GET /videos/{slug}`, `POST/PUT/DELETE /admin/videos` — publik 12/halaman terurut `published_at`; admin RBAC admin/super_admin (§5)
+
+Thumbnail: `CoverImageService` (dibangun di F-08) dipakai ulang dengan direktori berbeda (`thumbnails/`) untuk unggahan manual — konversi WebP yang sama tanpa duplikasi kode. Bila admin tidak mengunggah, `thumbnail_url` jatuh ke thumbnail bawaan YouTube (`https://img.youtube.com/vi/{id}/hqdefault.jpg`), memenuhi "thumbnail auto dari API atau unggah manual" tanpa perlu API key YouTube Data API (tidak disebut di arsitektur PRD). Diuji lewat 27 test baru (`Unit/Services/YoutubeUrlParserTest` — 11 test seluruh format URL; `Feature/Admin/VideoControllerTest` — CRUD, validasi URL, thumbnail+WebP, jadwal terbit; `Feature/VideoTest` — publik/draft/terjadwal/embed/404) — total suite backend 184 test lulus.
 
 **Frontend**
-- [ ] Embed via `youtube-nocookie.com`
-- [ ] Galeri video + halaman detail
-- [ ] Pesan jelas bila video tidak dapat di-embed
-- [ ] Thumbnail auto dari API atau unggah manual
+- [x] Embed via `youtube-nocookie.com` — `Video::embedUrl()` di backend menghasilkan URL-nya, dirender lewat `<iframe>` langsung di halaman detail (tidak perlu library tambahan)
+- [x] Galeri video + halaman detail — `app/video/page.tsx` (Server Component, ISR, grid + pagination sederhana — tanpa filter karena F-09 tidak memintanya seperti F-08), `app/video/[slug]/page.tsx` (`generateMetadata` Open Graph, durasi, tanggal, deskripsi)
+- [x] Pesan jelas bila video tidak dapat di-embed — catatan persisten di bawah iframe + tautan "Tonton langsung di YouTube"; mendeteksi kegagalan iframe YouTube secara andal butuh YouTube IFrame Player API penuh (di luar cakupan), jadi fallback berupa tautan langsung yang selalu terlihat dipilih sebagai solusi pragmatis
+- [x] Thumbnail auto dari API atau unggah manual — `components/videos/video-card.tsx` (`unoptimized` untuk thumbnail CDN YouTube karena domainnya tidak perlu didaftarkan ke `next/image` remotePatterns, sedangkan thumbnail unggahan manual tetap dioptimasi lewat host backend yang sudah terdaftar di F-08)
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end: login admin → tambah video (judul, deskripsi, URL `youtube.com/watch?v=...`, durasi 8:30, terbit sekarang) → tersimpan dengan `youtube_id` terekstraksi benar → tampil di `/video` dengan thumbnail asli YouTube + badge durasi "8:30" → detail video menampilkan iframe embed berfungsi (preview YouTube dengan tombol play) + pesan fallback + tautan YouTube langsung → dikonfirmasi lewat `curl` langsung ke API bahwa `embed_url` memakai `youtube-nocookie.com` dan `thumbnail_url` memakai `img.youtube.com`. Data uji dibersihkan setelahnya.
 
 ---
 

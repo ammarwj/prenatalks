@@ -109,7 +109,7 @@ export default async function ArticleDetailPage({
           </div>
 
           {article.cover_url && (
-            <div className="relative mt-6 aspect-[16/9] w-full overflow-hidden rounded-2xl">
+            <div className="relative mt-6 aspect-video w-full overflow-hidden rounded-2xl">
               <Image
                 src={article.cover_url}
                 alt={article.title}
