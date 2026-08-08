@@ -347,14 +347,36 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 ## F-14 · Panel Admin & Statistik (P0)
 
 **Backend**
-- [ ] `GET /admin/dashboard` — total pengguna, assessment bulan ini, distribusi risiko, konten terbit, respon form
-- [ ] `GET /admin/audit-logs` (super_admin)
-- [ ] Migrasi `audit_logs`, pencatatan otomatis di setiap aksi CRUD admin
+- [x] `GET /admin/dashboard` — `App\Services\AdminStatsService` + `Admin\DashboardController`. Selain lima angka yang diminta, tiap kartu membawa konteksnya sendiri (pengguna baru bulan ini & jumlah admin, total assessment & yang bertanda bahaya, pecahan konten per jenis, form yang sedang dibuka) supaya angka besarnya bisa ditafsirkan tanpa membuka modul lain
+- [x] `GET /admin/audit-logs` (super_admin) — `Admin\AuditLogController`, paginasi 25, filter aksi/jenis data/rentang tanggal, terurut terbaru dulu. `meta` ikut membawa daftar label aksi & jenis data supaya dropdown filter di frontend tidak menduplikasi daftar itu
+- [x] Migrasi `audit_logs`, pencatatan otomatis di setiap aksi CRUD admin — trait `App\Traits\Auditable` + `App\Services\AuditRecorder`, dipasang di `Article`, `Video`, `Faq`, `Form`, `Questionnaire`, `ChecklistItem`, `Setting`, `User`
+- [x] `GET/PUT /admin/users` (super_admin) — `Admin\UserController`; ada di PRD §11.2 & sitemap §8 tapi tidak diklaim bagian checklist mana pun, jadi diambil F-14 sebagai penerapan konkret item "tabel data server-side"
+
+Empat keputusan pada mekanisme audit:
+- **Observer, bukan panggilan manual.** Tercatat lewat jalur mana pun, jadi tidak bisa bolong karena lupa dipanggil saat menambah endpoint. Audit log yang bolong lebih berbahaya daripada tidak ada sama sekali
+- **Hanya saat ada pelaku yang login.** Perubahan dari seeder/migrasi/artisan tidak dicatat — kalau tidak, log dibanjiri baris yang tidak menjawab "siapa mengubah apa"
+- **Model anak tidak diaudit.** `questions`/`question_options` dibuat massal bersama induknya; mengauditnya membuat satu penyuntingan kuesioner menghasilkan puluhan baris yang menenggelamkan kejadian pentingnya
+- **Redaksi & abaikan.** `password_hash`/`remember_token` tidak pernah masuk `changes` (log ini dibaca manusia); `last_login_at` diabaikan lewat `User::auditIgnore()` supaya tiap login tidak jadi baris audit
+- `audit_logs.user_id` memakai `nullOnDelete`, bukan cascade: menghapus akun admin tidak boleh ikut menghapus jejak apa yang pernah ia ubah — justru saat itulah audit log paling dibutuhkan
+
+**Dua bug nyata ketahuan lewat test.** (1) `role` dan `is_active` sengaja tidak ada di `$fillable` model `User` (supaya registrasi tidak bisa menaikkan peran lewat mass assignment), sehingga `$user->update()` di controller diam-diam tidak melakukan apa pun — diganti `forceFill()->save()`. (2) Nilai kolom `jsonb` datang sebagai string JSON mentah, jadi `changes` pada perubahan `Setting` berisi `'"Judul baru"'` alih-alih `'Judul baru'`; `AuditRecorder::normalize()` kini men-decode-nya, tapi hanya untuk string yang diawali `{`, `[`, atau `"` supaya teks biasa tidak ikut berubah tipe (judul "123" tidak boleh jadi angka).
+
+**Penjaga penguncian akun.** `UserController` menolak dua hal yang tidak bisa dibatalkan lewat antarmuka: super admin menurunkan peran/menonaktifkan **dirinya sendiri**, dan menurunkan **super admin aktif terakhir**. Tanpa keduanya, pengelolaan akun dan kuesioner risiko bisa terkunci permanen.
+
+Diuji lewat 30 test baru (`Feature/Admin/AuditLogTest` — 11 test: perubahan tanpa pelaku tidak dicatat, create/update/delete tercatat, `changes` hanya memuat kolom yang berubah, nilai JSON terbaca, kolom sensitif tidak pernah masuk, login tidak diaudit, RBAC super_admin, filter, penolakan filter tak dikenal, urutan & paginasi; `Feature/Admin/DashboardStatsTest` — 7 test: RBAC, sistem kosong, hitungan peran & status, assessment bulan ini vs total vs belum selesai, level tak terpakai tetap muncul sebagai 0, konten hanya yang terbit, respon form; `Feature/Admin/UserControllerTest` — 12 test: RBAC bertingkat, paginasi, pencarian nama/email, filter peran & status, sorting terbatas whitelist, `password_hash` tidak pernah bocor, ubah peran, penolakan peran tak dikenal, larangan menurunkan/menonaktifkan diri sendiri, larangan menurunkan super admin aktif terakhir) — total suite backend 286 test lulus, Pint bersih.
 
 **Frontend**
-- [ ] Kartu statistik admin
-- [ ] Tabel data: pencarian, filter, sorting, pagination server-side
-- [ ] Halaman audit log (super admin)
+- [x] Kartu statistik admin — `components/admin/admin-stat-cards.tsx` di `/admin` (menggantikan halaman placeholder). Batang distribusi risiko memakai `color_hex` tiap level yang dikonfigurasi Super Admin, sama seperti `RiskLevelBadge`, bukan token Tailwind tetap. Pintasan modul di atasnya menyaring sendiri item khusus super_admin
+- [x] Tabel data: pencarian, filter, sorting, pagination server-side — `/admin/pengguna`. Pencarian di-debounce 350 ms supaya tiap ketikan tidak jadi satu request; klik header kolom membalik arah urutan; `components/admin/table-pagination.tsx` dibuat terpisah dari `ArticlePagination` karena tabel admin memuat data lewat klien (callback) sedangkan halaman publik ber-ISR memakai `<Link>`
+- [x] Halaman audit log (super admin) — `/admin/audit-log` + `components/admin/audit-change-list.tsx` yang merender dua bentuk `changes` (`{from,to}` untuk update, cuplikan atribut untuk create/delete) sebagai daftar ringkas dengan opsi "lihat semua" agar tinggi baris tabel tidak meledak
+
+`SuperAdminRestricted` kini menerima prop `description` (teks bawaannya tetap soal kuesioner dari F-05) supaya halaman pengguna dan audit log bisa menjelaskan penolakannya sendiri.
+
+**Catatan penempatan.** Sitemap §8 menaruh audit log di `/admin/pengaturan`; isinya dipisah ke halaman sendiri karena tabel berpaginasi dengan filternya sendiri berebut ruang dengan form pengaturan. Jalur navigasi sitemap tetap dijaga lewat tautan "Audit Log" di halaman pengaturan (hanya tampil untuk super_admin).
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end sebagai super admin: `/admin` menampilkan 4 kartu statistik + distribusi level risiko, dan pintasan "Pengguna"/"Audit Log"/"Checklist Risiko" hanya muncul untuk super_admin → `/admin/pengguna` menampilkan 11 pengguna dengan penanda arah urut di kolom "Terdaftar" → mengetik "citra" menyaring server-side jadi 1 baris beserta ringkasan "Menampilkan 1–1 dari 1" → dialog ubah peran menampilkan penjelasan hak akses per peran dan tombol Simpan nonaktif selama belum ada perubahan → mengubah Admin → Tenaga Kesehatan tersimpan dan baris tabel langsung ikut berubah → mencoba menonaktifkan akun sendiri ditolak dengan pesan "Anda tidak dapat menonaktifkan akun Anda sendiri" → `/admin/audit-log` menampilkan tepat satu baris untuk perubahan tadi (pelaku, email, IP, badge "Diubah", "Pengguna #22", dan `role admin → health_worker` dengan nilai lama dicoret), sekaligus membuktikan dua kali login tidak menghasilkan baris audit. Data uji (4 pengguna + baris audit) dibersihkan setelahnya.
+
+**Yang belum dikerjakan dari bunyi PRD.** Halaman admin lama (artikel, video, FAQ, form) masih memuat seluruh daftar sekaligus tanpa paginasi server-side. Untuk volume konten v1 (target ≥ 200 konten, §3.2) itu belum jadi masalah, tapi kalau daftar artikel tumbuh jauh lebih besar, pola tabel di `/admin/pengguna` sudah siap dipakai ulang.
 
 ---
 

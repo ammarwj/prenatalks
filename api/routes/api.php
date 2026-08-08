@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\Api\V1\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Api\V1\Admin\ChecklistItemController as AdminChecklistItemController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\FaqController as AdminFaqController;
 use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\Api\V1\ArticleController;
 use App\Http\Controllers\Api\V1\AssessmentController;
@@ -69,9 +72,14 @@ Route::middleware('auth:api')->group(function () {
 
     Route::middleware('role:super_admin')->prefix('admin')->group(function () {
         Route::apiResource('questionnaires', AdminQuestionnaireController::class);
+
+        Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
+        Route::apiResource('users', AdminUserController::class)->only(['index', 'show', 'update']);
     });
 
     Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', AdminDashboardController::class);
+
         Route::apiResource('articles', AdminArticleController::class);
         Route::apiResource('videos', AdminVideoController::class);
 

@@ -19,16 +19,21 @@ export function useSuperAdminGuard() {
   return { user, isSuperAdmin };
 }
 
-/** Pesan blokir eksplisit — sengaja tidak redirect diam-diam supaya admin biasa paham kenapa ditolak. */
-export function SuperAdminRestricted() {
+/**
+ * Pesan blokir eksplisit — sengaja tidak redirect diam-diam supaya admin biasa
+ * paham kenapa ditolak. Teks bawaannya soal kuesioner (pemakaian pertamanya di
+ * F-05); halaman lain mengoper `description` sendiri.
+ */
+export function SuperAdminRestricted({
+  description = "Manajemen kuesioner cek risiko hanya bisa diakses oleh peran Super Admin. Hubungi Super Admin bila Anda perlu mengubah kuesioner ini.",
+}: {
+  description?: string;
+}) {
   return (
     <Alert variant="destructive" className="rounded-xl">
       <ShieldAlert className="size-4" />
       <AlertTitle>Akses terbatas untuk Super Admin</AlertTitle>
-      <AlertDescription>
-        Manajemen kuesioner cek risiko hanya bisa diakses oleh peran Super Admin. Hubungi Super
-        Admin bila Anda perlu mengubah kuesioner ini.
-      </AlertDescription>
+      <AlertDescription>{description}</AlertDescription>
     </Alert>
   );
 }

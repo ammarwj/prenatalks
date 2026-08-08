@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, FileClock, Loader2 } from "lucide-react";
 
 import { CommunitySettingsForm } from "@/components/admin/community-settings-form";
+import { useSuperAdminGuard } from "@/components/admin/super-admin-guard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { CommunitySettings } from "@/lib/types";
@@ -16,6 +17,7 @@ import type { CommunitySettings } from "@/lib/types";
  * dan audit log menyusul di F-14.
  */
 export default function PengaturanAdminPage() {
+  const { isSuperAdmin } = useSuperAdminGuard();
   const [settings, setSettings] = useState<CommunitySettings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -43,15 +45,29 @@ export default function PengaturanAdminPage() {
             menit — halaman itu di-cache untuk menghemat beban server.
           </p>
         </div>
-        <Link
-          href="/komunitas"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-        >
-          <ExternalLink className="size-4" />
-          Lihat halaman publik
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {/* Sitemap PRD §8 menempatkan audit log di halaman pengaturan; isinya
+              dipisah ke halaman sendiri (tabel berpaginasi butuh ruang), jadi
+              tautan ini yang menjaga jalur navigasinya tetap sesuai. */}
+          {isSuperAdmin && (
+            <Link
+              href="/admin/audit-log"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+            >
+              <FileClock className="size-4" />
+              Audit Log
+            </Link>
+          )}
+          <Link
+            href="/komunitas"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <ExternalLink className="size-4" />
+            Lihat halaman publik
+          </Link>
+        </div>
       </div>
 
       {loadError && (

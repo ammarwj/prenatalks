@@ -493,3 +493,53 @@ export type DashboardOverview = {
   pending_forms: DashboardPendingForm[];
   recommended_articles: ArticleSummary[];
 };
+
+/** PRD §9 F-14 — statistik panel admin (`GET /admin/dashboard`). */
+export type AdminStats = {
+  users: { total: number; new_this_month: number; active: number; admins: number };
+  assessments: { this_month: number; total: number; with_danger_sign: number };
+  risk_distribution: { id: number; name: string; color_hex: string; count: number }[];
+  content: {
+    articles_published: number;
+    articles_draft: number;
+    videos_published: number;
+    faqs_published: number;
+  };
+  form_responses: { total: number; this_month: number; open_forms: number };
+};
+
+export type UserRole = User["role"];
+
+/** PRD §9 F-14 — kelola pengguna (`GET/PUT /admin/users`). */
+export type AdminUser = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  is_active: boolean;
+  email_verified_at: string | null;
+  last_login_at: string | null;
+  created_at: string;
+};
+
+/** PRD §9 F-14, §10 — audit log (`GET /admin/audit-logs`). */
+export type AuditLogEntry = {
+  id: number;
+  action: string;
+  action_label: string;
+  model_type: string;
+  model_label: string;
+  model_id: number | null;
+  changes: Record<string, unknown> | null;
+  ip: string | null;
+  created_at: string;
+  user: { id: number; name: string; email: string } | null;
+};
+
+export type PaginationMeta = {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+};

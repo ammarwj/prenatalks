@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,7 +18,19 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes;
+    use Auditable, HasFactory, Notifiable, SoftDeletes;
+
+    /**
+     * `last_login_at` berubah setiap kali seseorang masuk — mencatatnya
+     * sebagai perubahan admin akan menenggelamkan kejadian yang benar-benar
+     * penting (perubahan role atau status aktif) di audit log.
+     *
+     * @return list<string>
+     */
+    public function auditIgnore(): array
+    {
+        return ['last_login_at'];
+    }
 
     /**
      * Get the attributes that should be cast.

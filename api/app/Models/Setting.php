@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['key', 'value', 'group_name'])]
 class Setting extends Model
 {
+    use Auditable;
+
     /**
      * Kunci yang dikenal sistem → kelompoknya. Kunci di luar daftar ini
      * diabaikan saat menyimpan, supaya panel admin tidak bisa dipakai

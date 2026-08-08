@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['group_name', 'title', 'description', 'order_index', 'is_active'])]
 class ChecklistItem extends Model
 {
+    use Auditable;
+
     /**
      * Kelompok tetap sesuai PRD §9 F-11. Urutan array ini juga menentukan
      * urutan tampil kelompok di `GET /checklist` — bukan urutan alfabet.
