@@ -72,7 +72,7 @@ export default async function ArticleDetailPage({
       <PublicHeader backHref="/artikel" backLabel="Kembali ke Artikel" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <article className="rounded-3xl border border-border bg-white p-6 shadow-soft sm:p-10">
           {article.category && (
             <span className="text-xs font-semibold uppercase tracking-wide text-primary-text">

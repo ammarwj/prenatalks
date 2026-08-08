@@ -56,7 +56,7 @@ export default async function TentangPage() {
     <div className="min-h-screen bg-muted/40">
       <PublicHeader />
 
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <div className="mb-10 text-center">
           <p className="text-sm font-semibold tracking-wide text-primary-text uppercase">
             Tentang Kami

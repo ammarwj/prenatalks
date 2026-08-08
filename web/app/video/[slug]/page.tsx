@@ -51,7 +51,7 @@ export default async function VideoDetailPage({
     <div className="min-h-screen bg-muted/40">
       <PublicHeader backHref="/video" backLabel="Kembali ke Video" />
 
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <article className="rounded-3xl border border-border bg-white p-6 shadow-soft sm:p-10">
           {video.category && (
             <span className="text-xs font-semibold uppercase tracking-wide text-primary-text">

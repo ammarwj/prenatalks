@@ -396,7 +396,16 @@ Diganti rute publik sungguhan sesuai sitemap §8: Beranda · Artikel · Video ·
 
 Tautan "kembali" (`backHref`) kini hanya dikirim halaman detail dan hanya tampil di layar sempit: di sana menu bersembunyi di balik drawer, sementara di layar lebar ia redundan dengan menu ("Kembali ke Video" = menu "Video"). Logo di `app/(auth)/layout.tsx` ikut diarahkan ke `/` — `#beranda` bawaannya juga anchor mati di luar landing.
 
-**Lebar konten dibakukan jadi dua tingkat**, tidak lebih, supaya tetap konsisten: `max-w-7xl` untuk halaman etalase yang punya grid kartu (`/artikel`, `/video`, `/tentang` — sejajar dengan header) dan `max-w-3xl` untuk halaman baca & form (`/faq`, `/komunitas`, `/kalkulator`, `/artikel/[slug]`, `/video/[slug]`). Badan artikel sengaja tidak ikut melebar: pada `7xl` satu baris teks jadi ~1280px, jauh di atas ukuran baca yang nyaman.
+**Lebar konten dibakukan jadi dua tingkat**, tidak lebih, supaya tetap konsisten:
+
+- `max-w-7xl` — halaman daftar bergrid (`/artikel`, `/video`), sejajar dengan header
+- `max-w-4xl` — sisanya (`/faq`, `/komunitas`, `/kalkulator`, `/tentang`, `/artikel/[slug]`, `/video/[slug]`)
+
+Tingkat sempitnya sengaja `4xl`, **menyamai `app/dashboard/layout.tsx`** yang sudah memakai `max-w-4xl` di header, banner verifikasi, dan `<main>`-nya. Jadi lebar konten seragam saat pengguna berpindah antara area publik dan area dashboard, bukan dua sistem yang kebetulan mirip.
+
+Badan artikel tidak ikut ke `7xl`: di situ satu baris teks jadi ~1280px, jauh di atas 45–75 karakter yang nyaman dibaca. Pada `4xl` (~896px) masih di atas ukuran ideal — kalau kelak terasa terlalu lebar, perbaikannya melepas `max-w-none` pada `prose` di `app/artikel/[slug]/page.tsx:125`, bukan menambah tingkat lebar ketiga.
+
+`/tentang` sempat dicoba di tingkat lebar karena punya grid `sm:grid-cols-3`, tapi dipindah ke tingkat sempit: halaman itu hibrida — grid kartunya ingin lebar, tapi empat paragrafnya (baris 68, 95, 149, 183) tidak berpembatas sendiri, sehingga di `7xl` paragraf "Sejarah" membentang ~1235px.
 
 **Tombol sesi di header — dan kenapa ia TIDAK memanggil `/api/auth/refresh`.** `components/shared/auth-nav-button.tsx` menampilkan "Masuk" untuk tamu dan "Dashboard" untuk yang sudah punya sesi, memakai ulang `landingPathForRole()` sehingga admin diarahkan ke `/admin`.
 

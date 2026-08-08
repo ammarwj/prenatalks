@@ -27,7 +27,7 @@ export default async function FaqPage() {
       <PublicHeader />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-extrabold text-foreground sm:text-3xl">
             Pertanyaan Umum
