@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\Api\V1\Admin\ChecklistItemController as AdminChecklistItemController;
 use App\Http\Controllers\Api\V1\Admin\FaqController as AdminFaqController;
 use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\V1\AssessmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CalculatorController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\ChecklistController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -49,6 +51,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/assessments/{assessment}', [AssessmentController::class, 'show']);
     Route::get('/assessments/{assessment}/pdf', [AssessmentController::class, 'pdf']);
 
+    // Rute item pribadi didaftarkan sebelum `/checklist/{item}` agar segmen
+    // "custom" tidak diikat sebagai ID item template (PRD §11.2 F-11).
+    Route::get('/checklist', [ChecklistController::class, 'index']);
+    Route::post('/checklist/custom', [ChecklistController::class, 'storeCustom']);
+    Route::patch('/checklist/custom/{progress}', [ChecklistController::class, 'updateCustom']);
+    Route::delete('/checklist/custom/{progress}', [ChecklistController::class, 'destroyCustom']);
+    Route::patch('/checklist/{item}', [ChecklistController::class, 'update']);
+
     Route::middleware('role:super_admin')->prefix('admin')->group(function () {
         Route::apiResource('questionnaires', AdminQuestionnaireController::class);
     });
@@ -62,6 +72,11 @@ Route::middleware('auth:api')->group(function () {
         // sebagai ID bila urutannya terbalik.
         Route::patch('/faqs/reorder', [AdminFaqController::class, 'reorder']);
         Route::apiResource('faqs', AdminFaqController::class);
+
+        // Alasan urutan sama seperti FAQ di atas: "reorder" harus dicocokkan
+        // sebelum wildcard {checklist_item} milik apiResource.
+        Route::patch('/checklist-items/reorder', [AdminChecklistItemController::class, 'reorder']);
+        Route::apiResource('checklist-items', AdminChecklistItemController::class);
 
         Route::apiResource('forms', AdminFormController::class);
 

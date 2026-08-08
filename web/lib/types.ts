@@ -402,3 +402,44 @@ export type AdminFaq = {
   created_at: string;
   updated_at: string;
 };
+
+/** PRD §9 F-11 — checklist persiapan melahirkan. */
+export type ChecklistItemType = "template" | "custom";
+
+export type ChecklistItem = {
+  /** Item template: `checklist_items.id`. Item pribadi: id baris progres. */
+  id: number;
+  type: ChecklistItemType;
+  title: string;
+  description: string | null;
+  is_checked: boolean;
+  checked_at: string | null;
+};
+
+export type ChecklistProgressSummary = {
+  total: number;
+  checked: number;
+  progress_percent: number;
+};
+
+export type ChecklistGroup = ChecklistProgressSummary & {
+  name: string;
+  is_custom: boolean;
+  items: ChecklistItem[];
+};
+
+export type ChecklistOverview = {
+  groups: ChecklistGroup[];
+  summary: ChecklistProgressSummary;
+};
+
+export type AdminChecklistItem = {
+  id: number;
+  group_name: string;
+  title: string;
+  description: string | null;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};

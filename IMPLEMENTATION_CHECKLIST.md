@@ -272,15 +272,23 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 ## F-11 · Checklist Persiapan Melahirkan (P0)
 
 **Backend**
-- [ ] Migrasi `checklist_items`, `user_checklist_progress`
-- [ ] `GET /checklist`, `PATCH /checklist/{itemId}`, `POST/DELETE /checklist/custom`
-- [ ] Item baru dari admin otomatis tampil di checklist user tanpa menghapus progres lama
+- [x] Migrasi `checklist_items`, `user_checklist_progress` — sesuai skema §10. `user_checklist_progress` menampung dua jenis baris dalam satu tabel: progres item template (`checklist_item_id` terisi) dan item pribadi (`custom_title` terisi, `checklist_item_id` NULL). `UNIQUE(user_id, checklist_item_id)` tetap dipakai persis seperti PRD — NULL dianggap saling berbeda di PostgreSQL maupun SQLite, jadi batasan itu mencegah duplikasi progres template tanpa membatasi jumlah item pribadi
+- [x] `GET /checklist`, `PATCH /checklist/{itemId}`, `POST/DELETE /checklist/custom` — plus `PATCH /checklist/custom/{id}` yang tidak tertulis literal di §11.2. Item pribadi tidak punya `checklist_items.id`, jadi tidak bisa dialamatkan lewat `PATCH /checklist/{itemId}`; yang dialamatkan adalah baris progresnya sendiri. Alasan yang sama membuat `DELETE /checklist/custom` menjadi `/checklist/custom/{id}`. Rute `custom` didaftarkan sebelum `/checklist/{item}` agar segmen itu tidak diikat sebagai ID item template
+- [x] Item baru dari admin otomatis tampil di checklist user tanpa menghapus progres lama — `App\Services\ChecklistService` menggabungkan template dengan progres saat baca, dan baris progres dibuat saat item pertama kali dicentang (`firstOrNew`), bukan di-backfill massal saat admin menambah item. Item tanpa baris progres cukup dianggap belum tercentang. `is_active = false` menyembunyikan item dari pengguna tanpa menghapus progres; menghapus item permanen ikut menghapus progresnya (`cascadeOnDelete`)
+
+Kelompok dikunci ke lima nilai PRD lewat `ChecklistItem::GROUPS` (divalidasi `Rule::in`, bukan free text) supaya tidak lahir kelompok kembar akibat salah ketik; urutan array itu juga menentukan urutan tampil kelompok — diurutkan di PHP karena urutannya semantik, bukan alfabet. `ChecklistItemSeeder` mengisi 32 item awal mengacu anjuran Buku KIA, `firstOrCreate` per (kelompok, judul) agar aman dijalankan ulang. Persentase dihitung di backend (bukan di klien) supaya kartu progres checklist di dashboard F-13 bisa memakai angka yang sama.
+
+Diuji lewat 27 test baru (`Feature/ChecklistTest` — 15 test: guard auth, lima kelompok selalu tampil, item nonaktif tersembunyi, centang/lepas centang beserta `checked_at`, invarian "item admin baru tidak me-reset progres", progres terisolasi antar-pengguna, CRUD item pribadi, item pengguna lain tidak terjangkau, baris progres template tidak bisa dihapus lewat jalur `custom`; `Feature/Admin/ChecklistItemControllerTest` — 12 test: RBAC, CRUD, penolakan `group_name` di luar daftar PRD, `order_index` per kelompok, pindah kelompok, nonaktif tanpa kehilangan progres, reorder, penolakan ID lintas kelompok) — total suite backend 223 test lulus, Pint bersih.
+
+Catatan untuk test lintas-pengguna: guard `api` menyimpan user hasil resolusi dan singleton `tymon.jwt` menyimpan token yang sudah diurai, sehingga dua request dalam satu test dikenali sebagai pengguna yang sama. `ChecklistTest::authHeader()` memanggil `forgetGuards()` + `unsetToken()` lebih dulu. Bukan masalah produksi — di sana satu request HTTP berarti satu boot aplikasi.
 
 **Frontend**
-- [ ] Kelompok: Dokumen, Perlengkapan Ibu, Perlengkapan Bayi, Transportasi & Donor Darah, Rencana Persalinan
-- [ ] Progress bar per kategori + total
-- [ ] Tambah item pribadi
-- [ ] Panel admin: kelola template item
+- [x] Kelompok: Dokumen, Perlengkapan Ibu, Perlengkapan Bayi, Persiapan Transportasi & Donor Darah, Rencana Persalinan — `app/dashboard/persiapan/page.tsx` + `components/dashboard/checklist-group-card.tsx`; kelompok kosong tetap dirender supaya pengguna melihat kelima kelompok yang dijanjikan PRD meski admin belum mengisi salah satunya
+- [x] Progress bar per kategori + total — bar per kelompok, plus `CircularProgress` total memakai toska (`--success`), bukan merah muda: PRD §1.4 menetapkan toska sebagai warna status "selesai" dan merah muda tetap warna aksi
+- [x] Tambah item pribadi — `components/dashboard/checklist-custom-form.tsx`, muncul di kelompok "Item Pribadi" yang ikut dihitung ke progres total. Centang diterapkan optimistis lewat `lib/checklist.ts` (rumus persentasenya sengaja disamakan dengan `ChecklistService`) lalu diselaraskan dengan respons server; gagal simpan mengembalikan state ke snapshot sebelum aksi
+- [x] Panel admin: kelola template item — `app/admin/checklist/page.tsx`, satu `DndContext` per kelompok karena urutan hanya bermakna di dalam kelompok (`PATCH /admin/checklist-items/reorder` menyertakan `group_name`); memakai `@dnd-kit` yang sudah terpasang di F-10
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end: login → `/dashboard/persiapan` menampilkan 5 kelompok + "Item Pribadi" dari data seeder → mencentang item memperbarui bar kelompok (1/7 → 2/7) dan cincin total (3% → 6%) seketika → tambah item pribadi ("Catatan dari bidan: bawa hasil USG terakhir") muncul dengan toast dan input ter-reset → hapus item pribadi berkurang menjadi 0/1 → panel `/admin/checklist` menampilkan tiap kelompok dengan pegangan seret → dialog edit terisi benar, dropdown memuat tepat lima kelompok PRD → memindahkan item ke "Perlengkapan Bayi" sambil menonaktifkannya tersimpan sebagai `order_index=80, is_active=false` (dikonfirmasi lewat query DB) dan item tampil dengan badge "Nonaktif" di posisi akhir kelompok tujuan → dialog konfirmasi hapus berfungsi. Seperti di F-10, drag lewat mouse maupun keyboard tidak berhasil memicu dnd-kit di bawah tooling otomasi (keterbatasan simulasi pointer-event, bukan bug kode); endpoint reorder-nya sendiri diverifikasi lewat test dan `curl` langsung (urutan tersimpan, ID lintas kelompok ditolak 422). Data uji (item uji, item pribadi, user admin uji) dibersihkan setelahnya.
 
 ---
 

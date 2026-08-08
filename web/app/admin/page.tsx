@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, HelpCircle, ListChecks, Newspaper, Video } from "lucide-react";
+import { CheckSquare, ClipboardList, HelpCircle, ListChecks, Newspaper, Video } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -40,6 +40,13 @@ export default function AdminHomePage() {
           >
             <ListChecks className="size-4" />
             Checklist Risiko
+          </Link>
+          <Link
+            href="/admin/checklist"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <CheckSquare className="size-4" />
+            Checklist Persiapan
           </Link>
           <Link
             href="/admin/form"
