@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Admin\FaqController as AdminFaqController;
 use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
+use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\Api\V1\ArticleController;
 use App\Http\Controllers\Api\V1\AssessmentController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\PregnancyController;
 use App\Http\Controllers\Api\V1\QuestionnaireController;
+use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\VideoController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +33,9 @@ Route::get('/videos', [VideoController::class, 'index']);
 Route::get('/videos/{slug}', [VideoController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
+
+// Hanya kelompok di Setting::PUBLIC_GROUPS — dipakai halaman /komunitas.
+Route::get('/settings', [SettingController::class, 'index']);
 
 // Publik/login sesuai konfigurasi tiap form — dicek di dalam controller,
 // bukan lewat middleware 'auth:api', karena aksesnya bergantung pada
@@ -77,6 +82,9 @@ Route::middleware('auth:api')->group(function () {
         // sebelum wildcard {checklist_item} milik apiResource.
         Route::patch('/checklist-items/reorder', [AdminChecklistItemController::class, 'reorder']);
         Route::apiResource('checklist-items', AdminChecklistItemController::class);
+
+        Route::get('/settings', [AdminSettingController::class, 'index']);
+        Route::put('/settings', [AdminSettingController::class, 'update']);
 
         Route::apiResource('forms', AdminFormController::class);
 

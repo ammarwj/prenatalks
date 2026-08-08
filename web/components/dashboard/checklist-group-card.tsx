@@ -45,7 +45,7 @@ export function ChecklistGroupCard({
       <Progress
         value={group.progress_percent}
         aria-label={`Progres ${group.name}`}
-        className={`mt-3 h-2 ${isComplete ? "[&_[data-slot=progress-indicator]]:bg-success" : ""}`}
+        className={`mt-3 h-2 ${isComplete ? "**:data-[slot=progress-indicator]:bg-success" : ""}`}
       />
 
       {group.items.length === 0 ? (

@@ -295,10 +295,26 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 ## F-12 · Komunitas (P1)
 
 **Backend**
-- [ ] Tautan WhatsApp/Telegram dikelola via `settings`
+- [x] Tautan WhatsApp/Telegram dikelola via `settings` — migrasi `settings` (`key` unik, `value` JSONB, `group_name` terindeks) sesuai skema §10; `GET/PUT /admin/settings` sesuai §11.2. Kunci komunitas: `community_heading`, `community_description`, `community_rules` (array), `community_whatsapp_url`, `community_telegram_url`
+
+Yang tidak tertulis di PRD tapi dibutuhkan: **`GET /settings` publik**. §11.2 hanya mendaftarkan endpoint admin, sedangkan `/komunitas` adalah halaman publik yang harus membaca tautan itu tanpa login. Yang keluar dibatasi ke `Setting::PUBLIC_GROUPS` (saat ini hanya `community`) — kelompok baru tidak otomatis publik, jadi pengaturan yang ditambahkan F-14 nanti tidak ikut bocor.
+
+Tiga keputusan yang menjaga tabel key-value tetap aman dikelola admin non-teknis:
+- `Setting::KEYS` mendaftarkan kunci yang dikenal beserta kelompoknya. `putMany()` mengabaikan kunci di luar daftar dan **selalu** mengambil `group_name` dari registri, bukan dari input klien — panel admin tidak bisa dipakai menanam baris sembarangan
+- `Setting::defaults()` jadi satu sumber kebenaran untuk nilai awal: `SettingSeeder` mengisi baris dari sana, dan pembacaan tetap jatuh ke nilai bawaan bila barisnya belum ada, jadi halaman publik tidak pernah kosong hanya karena seeder belum jalan
+- `AdminSettingsRequest` memakai aturan eksplisit per kunci (bukan validasi generik atas JSON apa pun) supaya pesan galat menyebut "Tautan grup WhatsApp", bukan "settings.3.value tidak valid". Tautan tanpa skema (`chat.whatsapp.com/...`) dilengkapi jadi `https://` di `prepareForValidation()` alih-alih ditolak; string kosong disimpan sebagai null. Payload bersifat parsial (`sometimes`) sehingga form komunitas tidak mengosongkan pengaturan lain
+
+Diuji lewat 19 test baru (`Feature/SettingTest` — 7 test: fallback ke default saat belum di-seed, nilai tersimpan, kelompok non-publik tidak bocor, array tersimpan sebagai list, kunci tak dikenal diabaikan, `group_name` dari registri, simpan dua kali tidak menggandakan baris; `Feature/Admin/SettingControllerTest` — 12 test: RBAC guest/user/admin/super_admin, baca dengan default, simpan, normalisasi URL, URL kosong jadi null, URL & judul & butir aturan tidak valid ditolak, payload parsial, kunci tak dikenal tidak persisted) — total suite backend 242 test lulus, Pint bersih.
 
 **Frontend**
-- [ ] Halaman `/komunitas` — penjelasan, tombol tautan, aturan komunitas, catatan bukan kanal gawat darurat
+- [x] Halaman `/komunitas` — penjelasan, tombol tautan, aturan komunitas, catatan bukan kanal gawat darurat — `app/komunitas/page.tsx` (Server Component, ISR 5 menit seperti `/faq`). Tombol WhatsApp memakai merah muda (aksi utama) dan Telegram ungu bergaris (PRD §1.4); tombol yang tautannya belum diisi otomatis disembunyikan dan diganti keterangan. Ikon `WhatsappIcon`/`TelegramIcon` ditambahkan ke `components/shared/social-icons.tsx` dengan gaya gambar tangan yang sama seperti ikon sosial lain (lucide-react tidak lagi menyediakan ikon merek)
+- [x] Panel admin `/admin/pengaturan` — `components/admin/community-settings-form.tsx`, form berlabel dengan `useFieldArray` untuk daftar aturan (tambah/hapus butir, maks 12), bukan editor key-value mentah. Setelah simpan, form di-`reset()` dengan nilai dari server sehingga tautan yang dinormalisasi backend langsung terlihat dan tombol simpan menonaktifkan diri lagi
+
+**Catatan cakupan.** Catatan "komunitas bukan kanal layanan gawat darurat" sengaja **tidak** disimpan di `settings` — teks keselamatan itu sejenis disclaimer wajib PRD §12.4, jadi tetap di kode agar tidak bisa terhapus dari panel. Bunyinya mengikuti §12.4 ("segera hubungi bidan, dokter, atau fasilitas kesehatan terdekat") dan sengaja tidak menyebut nomor darurat spesifik karena pertanyaan terbuka §16 no. 3 (119 nasional vs faskes mitra Gresik) belum terjawab.
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end: `/komunitas` tanpa tautan terisi menampilkan keadaan kosong yang benar + daftar aturan dari seeder + kotak peringatan gawat darurat → login admin → `/admin/pengaturan` memuat nilai berjalan → menambah butir aturan kosong ditolak validasi klien per butir → mengisi tautan tanpa skema (`chat.whatsapp.com/...`, `t.me/...`) lalu simpan → toast sukses dan kedua field berubah jadi `https://...` (bukti `reset()` dari respons server bekerja) → dikonfirmasi lewat `curl` ke `GET /settings` dan query DB bahwa nilainya tersimpan dengan `group_name='community'` dan aturan bertambah jadi 6 butir. Data uji (user admin uji, tautan uji) dibersihkan setelahnya.
+
+**Konsekuensi ISR yang perlu diketahui:** perubahan admin baru tampil di `/komunitas` setelah cache 5 menit kedaluwarsa — sudah dijelaskan di teks panel admin. Bila nanti dirasa terlalu lambat, solusinya revalidasi on-demand (`revalidatePath('/komunitas')` lewat route handler yang dipanggil setelah simpan), bukan mengecilkan `revalidate`.
 
 ---
 

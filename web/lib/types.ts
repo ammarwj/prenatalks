@@ -443,3 +443,16 @@ export type AdminChecklistItem = {
   created_at: string;
   updated_at: string;
 };
+
+/**
+ * PRD §9 F-12 — pengaturan komunitas dari tabel `settings`.
+ * Bentuknya peta datar `kunci → nilai`, sama seperti respons
+ * `GET /settings` (publik) dan `GET /admin/settings`.
+ */
+export type CommunitySettings = {
+  community_heading: string;
+  community_description: string;
+  community_rules: string[];
+  community_whatsapp_url: string | null;
+  community_telegram_url: string | null;
+};

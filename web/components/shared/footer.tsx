@@ -18,7 +18,8 @@ const ABOUT_LINKS = [
 ];
 
 const HELP_LINKS = [
-  { label: "FAQ", href: "#" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Komunitas", href: "/komunitas" },
   { label: "Panduan Penggunaan", href: "#" },
   { label: "Hubungi Kami", href: "#kontak" },
 ];

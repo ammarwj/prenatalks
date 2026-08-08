@@ -57,3 +57,22 @@ export function TiktokIcon(props: SVGProps<SVGSVGElement>) {
     </Base>
   );
 }
+
+export function WhatsappIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M3.5 20.5 4.8 16.4A8 8 0 1 1 7.9 19.4L3.5 20.5Z" />
+      <path d="M9.2 9c-.2 1.6 1 3.3 1.9 4.1.9.9 2.5 2 4 1.8" />
+    </Base>
+  );
+}
+
+export function TelegramIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M21 4.5 2.8 11.3l4.9 1.7L21 4.5Z" />
+      <path d="M21 4.5 7.7 13l.4 5.4L11 15" />
+      <path d="M8.1 18.4 21 4.5l-3 15.1-6.9-4.6" />
+    </Base>
+  );
+}

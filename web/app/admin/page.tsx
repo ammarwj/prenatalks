@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { CheckSquare, ClipboardList, HelpCircle, ListChecks, Newspaper, Video } from "lucide-react";
+import {
+  CheckSquare,
+  ClipboardList,
+  HelpCircle,
+  ListChecks,
+  Newspaper,
+  Settings,
+  Video,
+} from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -54,6 +62,13 @@ export default function AdminHomePage() {
           >
             <ClipboardList className="size-4" />
             Form & Survei
+          </Link>
+          <Link
+            href="/admin/pengaturan"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+          >
+            <Settings className="size-4" />
+            Pengaturan
           </Link>
         </div>
       </div>
