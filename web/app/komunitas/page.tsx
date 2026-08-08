@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, ShieldAlert } from "lucide-react";
 
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { TelegramIcon, WhatsappIcon } from "@/components/shared/social-icons";
 import { apiServerGet } from "@/lib/api-server";
 import type { CommunitySettings } from "@/lib/types";
@@ -34,7 +34,7 @@ export default async function KomunitasPage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader />
+      <PublicHeader />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="mb-8">

@@ -1,5 +1,5 @@
 import { FaqAccordion } from "@/components/faq/faq-accordion";
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import type { Faq } from "@/lib/types";
 
@@ -24,7 +24,7 @@ export default async function FaqPage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader />
+      <PublicHeader />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

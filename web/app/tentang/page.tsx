@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, HeartHandshake, Users } from "lucide-react";
 
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import type { BrandColors, PublicSettings, TeamMember } from "@/lib/types";
 
@@ -54,9 +54,9 @@ export default async function TentangPage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader />
+      <PublicHeader />
 
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div className="mb-10 text-center">
           <p className="text-sm font-semibold tracking-wide text-primary-text uppercase">
             Tentang Kami

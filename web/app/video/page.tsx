@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { VideoCard } from "@/components/videos/video-card";
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { cn } from "@/lib/utils";
 import { apiServerGet } from "@/lib/api-server";
 import type { VideoSummary } from "@/lib/types";
@@ -27,8 +27,8 @@ export default async function VideoGalleryPage({
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader />
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <PublicHeader />
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-extrabold text-foreground sm:text-3xl">
             Video Edukasi

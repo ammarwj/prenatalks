@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { API_URL, REFRESH_COOKIE_MAX_AGE, REFRESH_COOKIE_NAME, refreshCookieOptions } from "@/lib/server/auth-cookie";
+import {
+  API_URL,
+  REFRESH_COOKIE_MAX_AGE,
+  REFRESH_COOKIE_NAME,
+  SESSION_HINT_COOKIE_NAME,
+  refreshCookieOptions,
+  sessionHintCookieOptions,
+} from "@/lib/server/auth-cookie";
 
 /**
  * Baca refresh_token dari cookie httpOnly (bukan dari body — client tidak
@@ -37,6 +44,7 @@ export async function POST(request: NextRequest) {
     );
     // refresh_token yang ditolak backend (invalid/revoked/kedaluwarsa) tidak berguna lagi.
     response.cookies.delete(REFRESH_COOKIE_NAME);
+    response.cookies.delete(SESSION_HINT_COOKIE_NAME);
     return response;
   }
 
@@ -51,6 +59,11 @@ export async function POST(request: NextRequest) {
 
   response.cookies.set(REFRESH_COOKIE_NAME, payload.data.refresh_token, {
     ...refreshCookieOptions,
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+  });
+
+  response.cookies.set(SESSION_HINT_COOKIE_NAME, payload.data.user.role, {
+    ...sessionHintCookieOptions,
     maxAge: REFRESH_COOKIE_MAX_AGE,
   });
 

@@ -61,12 +61,12 @@ export function Footer() {
           <ul className="space-y-2.5">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
-                <a
+                <Link
                   href={item.href}
                   className="text-sm text-muted-foreground hover:text-primary-text transition-colors"
                 >
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

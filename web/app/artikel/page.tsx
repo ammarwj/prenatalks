@@ -1,7 +1,7 @@
 import { ArticleCard } from "@/components/articles/article-card";
 import { ArticleFilters } from "@/components/articles/article-filters";
 import { ArticlePagination } from "@/components/articles/article-pagination";
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import type { ArticleSummary, Category } from "@/lib/types";
 
@@ -38,8 +38,8 @@ export default async function ArticleListPage({
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader />
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <PublicHeader />
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-extrabold text-foreground sm:text-3xl">Artikel</h1>
           <p className="mt-2 text-sm text-muted-foreground sm:text-base">

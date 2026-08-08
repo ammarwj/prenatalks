@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Calendar, ExternalLink } from "lucide-react";
 
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import { formatDuration } from "@/lib/validations/video";
 import type { VideoDetail } from "@/lib/types";
@@ -49,7 +49,7 @@ export default async function VideoDetailPage({
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader backHref="/video" backLabel="Kembali ke Video" />
+      <PublicHeader backHref="/video" backLabel="Kembali ke Video" />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <article className="rounded-3xl border border-border bg-white p-6 shadow-soft sm:p-10">

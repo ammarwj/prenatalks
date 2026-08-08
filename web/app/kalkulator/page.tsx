@@ -1,7 +1,5 @@
-import Link from "next/link";
-
 import { CalculatorForm } from "@/components/calculator/calculator-form";
-import { Logo } from "@/components/shared/logo";
+import { PublicHeader } from "@/components/shared/public-header";
 
 export const metadata = {
   title: "Kalkulator Kehamilan — PrenaTalks",
@@ -12,16 +10,9 @@ export const metadata = {
 export default function KalkulatorPage() {
   return (
     <div className="min-h-screen bg-muted/40">
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
-          <Logo withTagline={false} />
-          <Link href="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
-            Kembali ke Beranda
-          </Link>
-        </div>
-      </header>
+      <PublicHeader />
 
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-extrabold text-foreground sm:text-3xl">
             Kalkulator Kehamilan

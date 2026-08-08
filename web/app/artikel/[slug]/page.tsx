@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Calendar, Clock, Share2, User } from "lucide-react";
 
 import { ArticleCard } from "@/components/articles/article-card";
-import { PublicPageHeader } from "@/components/shared/public-page-header";
+import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import { sanitizeArticleHtml } from "@/lib/sanitize-html";
 import type { Article } from "@/lib/types";
@@ -69,7 +69,7 @@ export default async function ArticleDetailPage({
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <PublicPageHeader backHref="/artikel" backLabel="Kembali ke Artikel" />
+      <PublicHeader backHref="/artikel" backLabel="Kembali ke Artikel" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

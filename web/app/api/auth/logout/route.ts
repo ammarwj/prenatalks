@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { API_URL, REFRESH_COOKIE_NAME } from "@/lib/server/auth-cookie";
+import { API_URL, REFRESH_COOKIE_NAME, SESSION_HINT_COOKIE_NAME } from "@/lib/server/auth-cookie";
 
 /**
  * Blacklist access_token (Authorization diteruskan dari client) + revoke
@@ -26,5 +26,6 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ success: true, message: "Berhasil keluar", data: null });
   response.cookies.delete(REFRESH_COOKIE_NAME);
+  response.cookies.delete(SESSION_HINT_COOKIE_NAME);
   return response;
 }
