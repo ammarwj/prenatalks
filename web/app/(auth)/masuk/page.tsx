@@ -34,7 +34,9 @@ export default function MasukPage() {
     try {
       const data = await authLogin(values.email, values.password);
       setSession(data.access_token, data.user);
-      router.push("/dashboard/kehamilan");
+      // Ringkasan dashboard (F-13) jadi titik masuk, bukan form data kehamilan —
+      // sesuai sitemap PRD §8 yang menempatkan `/dashboard` sebagai akar area pengguna.
+      router.push("/dashboard");
     } catch (err) {
       setServerError(
         err instanceof ApiRequestError ? err.message : "Terjadi kesalahan, coba lagi."

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,6 +44,20 @@ class Form extends Model
     public function exports(): HasMany
     {
         return $this->hasMany(FormExport::class);
+    }
+
+    /**
+     * Versi kueri dari `isOpenForSubmission()` — dipakai saat menyaring
+     * banyak form sekaligus (mis. kartu "form belum diisi" di dashboard,
+     * PRD §9 F-13) tanpa memuat semuanya lebih dulu ke memori.
+     */
+    public function scopeOpenNow(Builder $query): void
+    {
+        $now = now();
+
+        $query->where('status', 'published')
+            ->where(fn (Builder $q) => $q->whereNull('opens_at')->orWhere('opens_at', '<=', $now))
+            ->where(fn (Builder $q) => $q->whereNull('closes_at')->orWhere('closes_at', '>=', $now));
     }
 
     /**

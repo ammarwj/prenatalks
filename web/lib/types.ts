@@ -456,3 +456,40 @@ export type CommunitySettings = {
   community_whatsapp_url: string | null;
   community_telegram_url: string | null;
 };
+
+/** PRD §9 F-13 — ringkasan dashboard pengguna (`GET /dashboard`). */
+export type DashboardPregnancy = {
+  id: number;
+  lmp_date: string | null;
+  edd_date: string | null;
+  edd_overridden: boolean;
+  gestational_age: { weeks: number; days: number; text: string };
+  trimester: number;
+  progress_percent: number;
+  days_remaining: number;
+};
+
+export type DashboardAssessment = {
+  id: number;
+  total_score: number;
+  has_danger_sign: boolean;
+  completed_at: string | null;
+  risk_level: RiskLevel | null;
+};
+
+export type DashboardPendingForm = {
+  id: number;
+  title: string;
+  slug: string;
+  type: "form" | "survey";
+  description: string | null;
+  closes_at: string | null;
+};
+
+export type DashboardOverview = {
+  pregnancy: DashboardPregnancy | null;
+  latest_assessment: DashboardAssessment | null;
+  checklist: ChecklistProgressSummary;
+  pending_forms: DashboardPendingForm[];
+  recommended_articles: ArticleSummary[];
+};

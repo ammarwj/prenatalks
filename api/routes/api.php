@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CalculatorController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ChecklistController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -47,6 +48,8 @@ Route::middleware('auth:api')->apiResource('pregnancies', PregnancyController::c
     ->only(['index', 'store', 'show', 'update']);
 
 Route::middleware('auth:api')->group(function () {
+    Route::get('/dashboard', DashboardController::class);
+
     Route::get('/questionnaires/active', [QuestionnaireController::class, 'active']);
 
     Route::post('/assessments', [AssessmentController::class, 'store']);

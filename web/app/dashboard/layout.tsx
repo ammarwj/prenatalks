@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut, MailWarning } from "lucide-react";
+import { Home, LayoutDashboard, LogOut, MailWarning } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -45,6 +45,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Logo withTagline={false} />
           <div className="flex items-center gap-4">
+            <Button asChild type="button" variant="ghost" size="sm" className="gap-1.5">
+              <Link href="/dashboard">
+                <Home className="size-4" />
+                Dashboard
+              </Link>
+            </Button>
             {user && (
               <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
                 {user.name}

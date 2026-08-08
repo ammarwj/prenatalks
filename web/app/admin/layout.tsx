@@ -11,7 +11,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 
 /**
  * Guard `/admin/*` — arahkan ke /masuk bila tidak ada sesi, atau ke
- * /dashboard/kehamilan bila sesi ada tapi role bukan admin/super_admin
+ * /dashboard bila sesi ada tapi role bukan admin/super_admin
  * (PRD §5 — RBAC). Belum ada halaman admin sungguhan (F-14); ini menyiapkan
  * pola guard-nya lebih dulu.
  */
@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     if (user && !isAuthorized) {
-      router.replace("/dashboard/kehamilan");
+      router.replace("/dashboard");
     }
   }, [accessToken, user, isAuthorized, router]);
 

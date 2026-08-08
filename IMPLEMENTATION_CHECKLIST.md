@@ -320,8 +320,27 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-en
 
 ## F-13 · Dashboard Pengguna (P0)
 
+**Backend** (tidak tercantum di checklist awal, tapi diperlukan — lihat catatan di bawah)
+- [x] `GET /dashboard` — endpoint agregat berisi kelima kartu; `App\Services\DashboardService` + `DashboardController`
+- [x] `Form::scopeOpenNow()` — versi kueri dari `isOpenForSubmission()` (F-06) untuk menyaring banyak form sekaligus tanpa memuat semuanya ke memori
+
 **Frontend**
-- [ ] `/dashboard` — usia kehamilan & HPL, status risiko terakhir + tanggal, progres checklist, form belum diisi, 3 artikel rekomendasi sesuai trimester
+- [x] `/dashboard` — usia kehamilan & HPL, status risiko terakhir + tanggal, progres checklist, form belum diisi, 3 artikel rekomendasi sesuai trimester — `app/dashboard/page.tsx` + lima kartu di `components/dashboard/` (`summary-card` sebagai kerangka bersama, lalu `pregnancy-summary-card`, `risk-summary-card`, `checklist-summary-card`, `pending-forms-card`, `recommended-articles-card`)
+
+**Kenapa ada endpoint agregat.** F-13 tidak menambah tabel, tapi datanya tersebar di lima sumber dan tiga di antaranya belum punya bentuk siap pakai: `PregnancyResource` tidak memuat usia kehamilan (hanya HPHT/HPL mentah), `GET /articles` mengembalikan 12 per halaman tanpa parameter limit, dan **tidak ada endpoint sama sekali** untuk "form yang belum diisi". Menyusunnya dari endpoint yang ada berarti 5 round-trip plus dua endpoint baru — padahal persona P1 memakai 4G tidak stabil (PRD §4) dan target respons p95 adalah 400 ms (§12.1). `GET /dashboard` tidak tertulis literal di §11.2; dibuat sebagai padanan sisi pengguna dari `GET /admin/dashboard` yang sudah ada di sana.
+
+Keputusan isi tiap kartu:
+- **Usia kehamilan** dihitung `PregnancyCalculator` dari HPHT, tapi **sisa hari dihitung terhadap `edd_date` yang tersimpan**, bukan HPL hasil rumus — supaya HPL yang ditimpa manual (F-03) tetap dihormati. Hanya kehamilan berstatus `active` yang tampil
+- **Status risiko** hanya dari assessment `completed`; yang masih `in_progress` tidak boleh muncul sebagai "hasil terakhir"
+- **Progres checklist** memakai ulang `ChecklistService::forUser()` (F-11), jadi rumus persentasenya persis sama dengan halaman `/dashboard/persiapan`
+- **Form belum diisi**: terbit + sedang dibuka + `is_public`, dan yang sudah pernah dikirim pengguna disembunyikan. Batas 5 item. *Batasan yang disengaja:* form `is_anonymous` tidak menyimpan `user_id` bersama jawaban (F-07), jadi pengisiannya tidak bisa diatribusikan dan form itu tetap tampil — konsekuensi dari janji anonimitas, bukan kekeliruan penyaringan
+- **Artikel rekomendasi**: 3 artikel trimester berjalan, ditambal artikel terbaru bila trimester itu belum punya tiga (tanpa menggandakan yang sudah terpilih). Tanpa data kehamilan, jatuh ke 3 artikel terbaru
+
+Diuji lewat 14 test baru (`Feature/DashboardTest`): guard auth, pengguna baru dapat kartu kosong tanpa galat, usia kehamilan & trimester, HPL manual menang atas rumus, hanya kehamilan aktif, assessment terakhir + level risikonya (yang `in_progress` diabaikan), ringkasan checklist, form yang sudah diisi hilang, pengisian pengguna lain tidak ikut menyembunyikan, form draf/tutup/belum buka/internal dikecualikan, artikel mengutamakan trimester berjalan, fallback tanpa data kehamilan, artikel draf tidak pernah direkomendasikan, dan data terisolasi antar-pengguna — total suite backend 256 test lulus, Pint bersih.
+
+**Perubahan navigasi.** `/dashboard` kini jadi titik masuk setelah login (sebelumnya `/dashboard/kehamilan`), sesuai sitemap §8 yang menempatkannya sebagai akar area pengguna; redirect non-admin di `app/admin/layout.tsx` ikut disesuaikan, dan header dashboard mendapat tautan "Dashboard". Ini melunasi catatan di F-04 ("belum ada nav dashboard, F-13").
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end dengan dua pengguna: (1) pengguna berisi — login mendarat di `/dashboard`, kartu kehamilan menampilkan "30 minggu 0 hari · Trimester 3 · 75% menuju HPL · HPL 17 Oktober 2026 · 70 hari lagi", badge "Risiko Rendah" skor 6, progres checklist 13% (4/32), satu survei di kartu "Belum Anda Isi" lengkap dengan tanggal tutup, dan tiga artikel dengan subjudul "Dipilih sesuai trimester 3" berurutan trimester-3 lebih dulu; (2) pengguna baru tanpa data — semua kartu menampilkan keadaan kosong dengan CTA yang benar dan subjudul artikel berubah jadi "Artikel terbaru dari PrenaTalks". Aturan "form hilang setelah diisi" dikonfirmasi lewat `curl`: submit survei → kartu jadi kosong untuk pengguna itu, sementara pengguna lain tetap melihatnya. Data uji (2 user, 3 artikel, 1 survei, progres checklist, assessment) dibersihkan setelahnya.
 
 ---
 
