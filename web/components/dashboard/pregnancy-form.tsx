@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Save } from "lucide-react";
 
 import { FormField } from "@/components/shared/form-field";
 import { HphtDatePicker } from "@/components/shared/hpht-date-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiPost, apiPut, ApiRequestError } from "@/lib/api-client";
+import { addDays, formatLongDate, naegeleEdd, parseIsoDate, toIsoDate, today } from "@/lib/date-utils";
 import type { Pregnancy } from "@/lib/types";
 import {
   BLOOD_TYPE_OPTIONS,
@@ -38,6 +40,9 @@ function toFormValues(pregnancy?: Pregnancy): Partial<PregnancyInput> {
 
   return {
     lmp_date: pregnancy.lmp_date.slice(0, 10),
+    // Hanya prefill saat benar-benar ditimpa manual — HPL hasil hitung otomatis
+    // tidak boleh muncul di field ini, nanti tersimpan sebagai override palsu.
+    edd_date: pregnancy.edd_overridden ? (pregnancy.edd_date?.slice(0, 10) ?? undefined) : undefined,
     gravida: toStr(pregnancy.gravida),
     para: toStr(pregnancy.para),
     abortus: toStr(pregnancy.abortus),
@@ -66,11 +71,16 @@ export function PregnancyForm({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PregnancyInput>({
     resolver: zodResolver(pregnancySchema),
     defaultValues: toFormValues(pregnancy),
   });
+
+  const lmpDate = useWatch({ control, name: "lmp_date" });
+  const eddDate = useWatch({ control, name: "edd_date" });
+  const automaticEdd = lmpDate ? naegeleEdd(lmpDate) : null;
 
   async function onSubmit(values: PregnancyInput) {
     setServerError(null);
@@ -127,6 +137,47 @@ export function PregnancyForm({
           <p className="mt-2 text-xs text-muted-foreground">
             HPL dan usia kehamilan dihitung otomatis dari tanggal ini di seluruh dashboard.
           </p>
+
+          {/* HPL manual dari USG — PRD F-03 "HPL (otomatis, dapat ditimpa manual)".
+              Mengosongkannya mengembalikan perhitungan Naegele di backend. */}
+          <div className="mt-5 border-t border-border pt-5">
+            <FormField
+              label="HPL dari USG (opsional)"
+              htmlFor="edd_date"
+              error={errors.edd_date?.message}
+              hint={
+                automaticEdd
+                  ? `Kosongkan untuk memakai perhitungan otomatis: ${formatLongDate(automaticEdd)}.`
+                  : "Isi bila bidan atau dokter memberi HPL berbeda berdasarkan USG."
+              }
+            >
+              <Controller
+                name="edd_date"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker
+                    id="edd_date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    min={lmpDate ? toIsoDate(addDays(parseIsoDate(lmpDate) ?? today(), 1)) : undefined}
+                    placeholder="Pakai perhitungan otomatis"
+                    aria-invalid={!!errors.edd_date}
+                    className={inputClass}
+                  />
+                )}
+              />
+            </FormField>
+            {eddDate && (
+              <button
+                type="button"
+                onClick={() => setValue("edd_date", "", { shouldDirty: true, shouldValidate: true })}
+                className="mt-2 text-xs font-semibold text-brand-purple hover:underline"
+              >
+                Kembali ke perhitungan otomatis
+              </button>
+            )}
+          </div>
         </CardContent>
       </Card>
 

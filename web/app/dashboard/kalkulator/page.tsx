@@ -1,12 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Baby, CheckSquare, Loader2, ShieldCheck } from "lucide-react";
 
 import { CalculatorForm } from "@/components/calculator/calculator-form";
+import { RiskDisclaimer } from "@/components/shared/risk-disclaimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { Pregnancy } from "@/lib/types";
+
+const CROSS_LINKS = [
+  { href: "/dashboard/kehamilan", label: "Data Kehamilan", Icon: Baby },
+  { href: "/dashboard/cek-risiko", label: "Cek Risiko", Icon: ShieldCheck },
+  { href: "/dashboard/persiapan", label: "Persiapan Melahirkan", Icon: CheckSquare },
+];
 
 export default function DashboardKalkulatorPage() {
   const [activePregnancy, setActivePregnancy] = useState<Pregnancy | null | undefined>(undefined);
@@ -32,13 +40,27 @@ export default function DashboardKalkulatorPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-extrabold text-foreground">
-          Kalkulator Kehamilan
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Hasil dapat disimpan sebagai HPHT pada profil kehamilan Anda.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-extrabold text-foreground">
+            Kalkulator Kehamilan
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Hasil dapat disimpan sebagai HPHT pada profil kehamilan Anda.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {CROSS_LINKS.map(({ href, label, Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
+            >
+              <Icon className="size-4" />
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {loadError && (
@@ -57,9 +79,13 @@ export default function DashboardKalkulatorPage() {
           mode="dashboard"
           initialLmpDate={activePregnancy?.lmp_date.slice(0, 10)}
           activePregnancyId={activePregnancy?.id}
+          activePregnancyEddOverridden={activePregnancy?.edd_overridden}
+          activePregnancyEddDate={activePregnancy?.edd_date}
           onSaved={setActivePregnancy}
         />
       )}
+
+      <RiskDisclaimer />
     </div>
   );
 }

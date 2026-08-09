@@ -126,4 +126,85 @@ class PregnancyCalculatorTest extends TestCase
 
         $this->assertSame(80, $result['days_remaining']);
     }
+
+    public function test_days_past_due_counts_up_after_the_due_date(): void
+    {
+        // days_remaining di-clamp ke 0 saat lewat HPL, jadi selisihnya dibawa
+        // oleh days_past_due — tanpa itu "sudah lewat 1 hari" dan "lewat 3 minggu"
+        // tampak sama di antarmuka.
+        $lmpDate = CarbonImmutable::parse('2026-01-01');
+        $today = $lmpDate->addDays(290);
+
+        $result = $this->calculator->calculate($lmpDate, $today);
+
+        $this->assertSame(0, $result['days_remaining']);
+        $this->assertSame(10, $result['days_past_due']);
+    }
+
+    public function test_days_past_due_is_zero_before_the_due_date(): void
+    {
+        $lmpDate = CarbonImmutable::parse('2026-01-01');
+
+        $result = $this->calculator->calculate($lmpDate, $lmpDate->addDays(200));
+
+        $this->assertSame(0, $result['days_past_due']);
+    }
+
+    public function test_milestone_dates_are_derived_from_the_lmp(): void
+    {
+        $lmpDate = CarbonImmutable::parse('2026-01-01');
+
+        $result = $this->calculator->calculate($lmpDate, $lmpDate->addWeeks(20));
+
+        $byKey = array_column($result['milestones'], null, 'key');
+
+        $this->assertSame(['trimester_2', 'viability', 'trimester_3', 'term', 'edd'], array_keys($byKey));
+        $this->assertSame('2026-04-09', $byKey['trimester_2']['date']);  // +14 minggu
+        $this->assertSame('2026-06-18', $byKey['viability']['date']);    // +24 minggu
+        $this->assertSame('2026-07-16', $byKey['trimester_3']['date']);  // +28 minggu
+        $this->assertSame('2026-09-17', $byKey['term']['date']);         // +37 minggu
+        $this->assertSame($result['edd_date'], $byKey['edd']['date']);
+    }
+
+    public function test_milestones_are_flagged_as_passed_relative_to_today(): void
+    {
+        $lmpDate = CarbonImmutable::parse('2026-01-01');
+
+        $result = $this->calculator->calculate($lmpDate, $lmpDate->addWeeks(24));
+
+        $byKey = array_column($result['milestones'], null, 'key');
+
+        $this->assertTrue($byKey['trimester_2']['passed']);
+        $this->assertTrue($byKey['viability']['passed'], 'tepat di hari milestone dihitung sudah lewat');
+        $this->assertFalse($byKey['trimester_3']['passed']);
+        $this->assertFalse($byKey['edd']['passed']);
+    }
+
+    public function test_overridden_due_date_replaces_the_naegele_result(): void
+    {
+        // HPL dari USG (PRD §9 F-03) harus mengalahkan rumus untuk edd_date,
+        // sisa hari, dan entri HPL di lini masa — tapi tidak menggeser usia
+        // kehamilan, yang tetap dihitung dari HPHT.
+        $lmpDate = CarbonImmutable::parse('2026-01-01');
+        $today = $lmpDate->addDays(200);
+        $overrideEdd = CarbonImmutable::parse('2026-10-15');
+
+        $result = $this->calculator->calculate($lmpDate, $today, $overrideEdd);
+
+        $this->assertSame('2026-10-15', $result['edd_date']);
+        $this->assertTrue($result['edd_overridden']);
+        $this->assertSame(87, $result['days_remaining']);
+        $this->assertSame(28, $result['gestational_age']['weeks']);
+
+        $byKey = array_column($result['milestones'], null, 'key');
+        $this->assertSame('2026-10-15', $byKey['edd']['date']);
+        $this->assertSame('2026-04-09', $byKey['trimester_2']['date'], 'milestone lain tetap dari HPHT');
+    }
+
+    public function test_edd_is_not_flagged_as_overridden_by_default(): void
+    {
+        $result = $this->calculator->calculate(CarbonImmutable::parse('2026-01-15'));
+
+        $this->assertFalse($result['edd_overridden']);
+    }
 }

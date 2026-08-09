@@ -19,6 +19,9 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
+  // Tanpa ini, canonical & og:url per halaman tetap relatif — perayap lebih
+  // menyukai URL absolut. Sumbernya sama dengan app/sitemap.ts.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "PrenaTalks — Teman Ibu Hamil untuk Persalinan Aman",
   description:
     "PrenaTalks menyederhanakan informasi kehamilan menjadi konten yang mudah dipahami, dilengkapi cek risiko kehamilan berbasis skor, kalkulator usia kehamilan, dan checklist persiapan persalinan.",

@@ -45,28 +45,26 @@ class DashboardService
     }
 
     /**
-     * Usia kehamilan dihitung dari HPHT, tapi sisa hari dihitung terhadap
-     * `edd_date` yang tersimpan — bukan HPL hasil rumus — supaya HPL yang
-     * ditimpa manual (PRD §9 F-03) tetap dihormati di dashboard.
+     * Usia kehamilan dihitung dari HPHT, tapi HPL yang ditimpa manual (PRD §9 F-03)
+     * diteruskan ke kalkulator supaya sisa hari dan lini masa dihitung terhadap
+     * tanggal itu, bukan terhadap hasil rumus Naegele.
      *
      * @return array<string, mixed>
      */
     private function pregnancySummary(Pregnancy $pregnancy): array
     {
-        $computed = $this->calculator->calculate(CarbonImmutable::parse($pregnancy->lmp_date));
-        $eddDate = $pregnancy->edd_date ? CarbonImmutable::parse($pregnancy->edd_date) : null;
+        $computed = $this->calculator->calculate(
+            CarbonImmutable::parse($pregnancy->lmp_date),
+            null,
+            $pregnancy->edd_overridden && $pregnancy->edd_date
+                ? CarbonImmutable::parse($pregnancy->edd_date)
+                : null,
+        );
 
         return [
             'id' => $pregnancy->id,
             'lmp_date' => $pregnancy->lmp_date?->toDateString(),
-            'edd_date' => $eddDate?->toDateString() ?? $computed['edd_date'],
-            'edd_overridden' => (bool) $pregnancy->edd_overridden,
-            'gestational_age' => $computed['gestational_age'],
-            'trimester' => $computed['trimester'],
-            'progress_percent' => $computed['progress_percent'],
-            'days_remaining' => $eddDate
-                ? max(0, (int) CarbonImmutable::today()->diffInDays($eddDate, false))
-                : $computed['days_remaining'],
+            ...$computed,
         ];
     }
 

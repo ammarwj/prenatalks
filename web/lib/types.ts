@@ -35,6 +35,15 @@ export type Pregnancy = {
 };
 
 /** Respons `POST /calculator` — PRD §11.2 F-04. */
+/** Satu penanda di lini masa kehamilan — lihat PregnancyCalculator::milestones(). */
+export type PregnancyMilestone = {
+  key: "trimester_2" | "viability" | "trimester_3" | "term" | "edd";
+  label: string;
+  week: number;
+  date: string;
+  passed: boolean;
+};
+
 export type CalculatorResult = {
   gestational_age: {
     weeks: number;
@@ -42,9 +51,13 @@ export type CalculatorResult = {
     text: string;
   };
   edd_date: string;
+  edd_overridden: boolean;
   trimester: 1 | 2 | 3;
   days_remaining: number;
+  /** Selalu 0 sebelum HPL; days_remaining di-clamp ke 0 setelahnya. */
+  days_past_due: number;
   progress_percent: number;
+  milestones: PregnancyMilestone[];
 };
 
 /** PRD §9 F-05 — struktur kuesioner cek risiko sisi pengguna (skor & tanda bahaya disembunyikan). */
@@ -458,15 +471,10 @@ export type CommunitySettings = {
 };
 
 /** PRD §9 F-13 — ringkasan dashboard pengguna (`GET /dashboard`). */
-export type DashboardPregnancy = {
+/** `GET /dashboard` menyebar hasil CalculatorResult yang sama, plus id & HPHT. */
+export type DashboardPregnancy = CalculatorResult & {
   id: number;
   lmp_date: string | null;
-  edd_date: string | null;
-  edd_overridden: boolean;
-  gestational_age: { weeks: number; days: number; text: string };
-  trimester: number;
-  progress_percent: number;
-  days_remaining: number;
 };
 
 export type DashboardAssessment = {

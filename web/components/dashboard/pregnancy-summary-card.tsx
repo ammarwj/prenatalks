@@ -1,21 +1,14 @@
 import Link from "next/link";
-import { Baby, CalendarHeart } from "lucide-react";
+import { Baby } from "lucide-react";
 
-import { CircularProgress } from "@/components/shared/circular-progress";
-import { formatLongDate } from "@/lib/date-utils";
+import { DueDateSummary, GestationalRing } from "@/components/shared/gestational-result";
 import type { DashboardPregnancy } from "@/lib/types";
-
-function formatDate(isoDate: string | null): string {
-  if (!isoDate) return "—";
-
-  return formatLongDate(isoDate.slice(0, 10));
-}
 
 /**
  * Kartu utama dashboard: usia kehamilan & HPL (PRD §9 F-13).
  *
- * Progres melingkar memakai ungu merek — motif lingkaran turunan logo yang
- * memang ditugaskan untuk indikator progres kalkulator kehamilan (PRD §1.3).
+ * Cincin dan baris HPL berasal dari components/shared/gestational-result.tsx
+ * supaya seragam dengan kartu hasil kalkulator.
  */
 export function PregnancySummaryCard({ pregnancy }: { pregnancy: DashboardPregnancy | null }) {
   if (!pregnancy) {
@@ -43,19 +36,14 @@ export function PregnancySummaryCard({ pregnancy }: { pregnancy: DashboardPregna
 
   return (
     <section className="flex flex-col items-center gap-6 rounded-3xl border border-border bg-primary-soft p-6 sm:flex-row sm:p-8">
-      <CircularProgress
-        percent={pregnancy.progress_percent}
-        color="var(--brand-purple)"
+      <GestationalRing
+        trimester={pregnancy.trimester}
+        progressPercent={pregnancy.progress_percent}
+        weeks={pregnancy.gestational_age.weeks}
+        display="weeks"
         size={140}
         strokeWidth={11}
-      >
-        <div className="text-center">
-          <span className="block font-display text-2xl font-extrabold tabular-nums text-brand-purple">
-            {pregnancy.gestational_age.weeks}
-          </span>
-          <span className="block text-xs font-semibold text-muted-foreground">minggu</span>
-        </div>
-      </CircularProgress>
+      />
 
       <div className="text-center sm:text-left">
         <p className="text-sm font-semibold text-muted-foreground">Usia Kehamilan</p>
@@ -66,14 +54,13 @@ export function PregnancySummaryCard({ pregnancy }: { pregnancy: DashboardPregna
           Trimester {pregnancy.trimester} · {pregnancy.progress_percent}% menuju HPL
         </p>
 
-        <div className="mt-4 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl bg-white px-4 py-3 text-sm shadow-soft sm:justify-start">
-          <CalendarHeart className="size-4 shrink-0 text-brand-teal-text" />
-          <span className="font-semibold text-foreground">HPL {formatDate(pregnancy.edd_date)}</span>
-          <span className="text-muted-foreground">
-            · {pregnancy.days_remaining} hari lagi
-            {pregnancy.edd_overridden && " (disesuaikan manual)"}
-          </span>
-        </div>
+        <DueDateSummary
+          eddDate={pregnancy.edd_date}
+          daysRemaining={pregnancy.days_remaining}
+          daysPastDue={pregnancy.days_past_due}
+          eddOverridden={pregnancy.edd_overridden}
+          className="mt-4 rounded-2xl bg-white px-4 py-3 shadow-soft"
+        />
       </div>
     </section>
   );

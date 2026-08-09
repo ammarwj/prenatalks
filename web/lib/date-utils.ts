@@ -108,6 +108,31 @@ export const WEEKDAY_SHORT_ID = buildWeekdayNames("short");
 export const WEEKDAY_LONG_ID = buildWeekdayNames("long");
 
 /**
+ * HPL menurut rumus Naegele: HPHT + 7 hari − 3 bulan + 1 tahun (PRD §9 F-04).
+ *
+ * Cermin sisi klien dari `PregnancyCalculator::estimatedDueDate()` di backend,
+ * dipakai hanya untuk menampilkan HPL otomatis sebagai pembanding saat pengguna
+ * mengisi HPL manual dari USG. Nilai yang tersimpan tetap berasal dari backend.
+ */
+export function naegeleEdd(lmpIsoDate: string): string | null {
+  const lmp = parseIsoDate(lmpIsoDate);
+  if (!lmp) return null;
+
+  const plus7 = addDays(lmp, 7);
+
+  // Sengaja TIDAK memakai addMonths(): fungsi itu meng-clamp hari, sedangkan
+  // Carbon meluber (31 Mei − 3 bulan = 3 Maret, bukan 28 Feb). Konstruktor Date
+  // meluber dengan cara yang sama. Urutannya pun harus persis seperti backend —
+  // kurangi 3 bulan dulu, baru tambah 1 tahun; menggabungkannya jadi +9 bulan
+  // memberi hasil berbeda saat tahun antara dan tahun akhir beda kabisatnya.
+  const minusThreeMonths = new Date(plus7.getFullYear(), plus7.getMonth() - 3, plus7.getDate());
+
+  return toIsoDate(
+    new Date(minusThreeMonths.getFullYear() + 1, minusThreeMonths.getMonth(), minusThreeMonths.getDate())
+  );
+}
+
+/**
  * Estimasi usia kehamilan dari HPHT untuk pratinjau di UI, mis. "12 minggu 3 hari".
  *
  * Perhitungan resmi (HPL, trimester, persentase) tetap milik backend

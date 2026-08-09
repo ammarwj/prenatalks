@@ -31,7 +31,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
 
-Route::post('/calculator', CalculatorController::class);
+// Endpoint komputasi publik — dibatasi agar tidak bisa dipakai membanjiri server.
+Route::post('/calculator', CalculatorController::class)->middleware('throttle:30,1');
 
 Route::get('/articles', [ArticleController::class, 'index']);
 Route::get('/articles/{slug}', [ArticleController::class, 'show']);

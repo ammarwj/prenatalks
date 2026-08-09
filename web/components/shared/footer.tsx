@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
+import { RISK_DISCLAIMER_TEXT } from "@/components/shared/risk-disclaimer";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -124,6 +125,13 @@ export function Footer() {
             </li>
           </ul>
         </div>
+      </div>
+
+      {/* Disclaimer medis wajib PRD §12.4 — tampil di footer seluruh situs. */}
+      <div className="border-t border-border">
+        <p className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-xs leading-relaxed text-muted-foreground">
+          {RISK_DISCLAIMER_TEXT}
+        </p>
       </div>
 
       <div className="bg-brand-purple">
