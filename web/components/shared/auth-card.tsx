@@ -3,13 +3,11 @@ import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function AuthCard({
-  eyebrow,
   title,
   subtitle,
   children,
   footer,
 }: {
-  eyebrow: string;
   title: string;
   subtitle: string;
   children: ReactNode;
@@ -18,10 +16,7 @@ export function AuthCard({
   return (
     <Card className="w-full max-w-md rounded-3xl border border-border bg-white shadow-soft">
       <CardHeader className="px-7 pt-7 text-center sm:px-8 sm:pt-8">
-        <p className="text-xs font-bold uppercase tracking-wide text-primary-text">
-          {eyebrow}
-        </p>
-        <h1 className="font-display mt-1.5 text-2xl font-extrabold text-foreground">
+        <h1 className="font-display text-2xl font-extrabold text-foreground">
           {title}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>

@@ -39,7 +39,6 @@ export default function LupaPasswordPage() {
   if (sentTo) {
     return (
       <AuthCard
-        eyebrow="PrenaTalks"
         title="Tautan terkirim"
         subtitle={`Kami sudah mengirim tautan atur ulang password ke ${sentTo}.`}
       >
@@ -55,7 +54,6 @@ export default function LupaPasswordPage() {
 
   return (
     <AuthCard
-      eyebrow="PrenaTalks"
       title="Lupa password?"
       subtitle="Tidak masalah. Masukkan email Anda, kami kirimkan tautan untuk membuat password baru."
       footer={

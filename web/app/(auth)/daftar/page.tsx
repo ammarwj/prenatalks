@@ -45,7 +45,6 @@ export default function DaftarPage() {
   if (success) {
     return (
       <AuthCard
-        eyebrow="PrenaTalks"
         title="Cek email Anda"
         subtitle="Kami sudah mengirim tautan verifikasi. Buka email Anda untuk mengaktifkan akun."
       >
@@ -61,7 +60,6 @@ export default function DaftarPage() {
 
   return (
     <AuthCard
-      eyebrow="PrenaTalks"
       title="Yuk, kita mulai"
       subtitle="Buat akun untuk menyimpan riwayat kehamilan dan hasil cek risiko Anda."
       footer={

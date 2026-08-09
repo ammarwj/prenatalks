@@ -48,7 +48,6 @@ export default function MasukPage() {
 
   return (
     <AuthCard
-      eyebrow="PrenaTalks"
       title="Yuk, masuk dulu"
       subtitle="Lanjutkan pantau kehamilan dan cek risiko Anda."
       footer={

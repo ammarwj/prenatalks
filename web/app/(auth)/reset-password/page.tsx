@@ -45,7 +45,6 @@ function ResetPasswordForm() {
   if (success) {
     return (
       <AuthCard
-        eyebrow="PrenaTalks"
         title="Password diperbarui"
         subtitle="Password baru Anda sudah tersimpan. Silakan masuk kembali."
       >
@@ -62,7 +61,6 @@ function ResetPasswordForm() {
   if (!token || !email) {
     return (
       <AuthCard
-        eyebrow="PrenaTalks"
         title="Tautan tidak lengkap"
         subtitle="Tautan atur ulang password ini tidak valid atau sudah kedaluwarsa."
       >
@@ -78,7 +76,6 @@ function ResetPasswordForm() {
 
   return (
     <AuthCard
-      eyebrow="PrenaTalks"
       title="Buat password baru"
       subtitle={`Atur ulang password untuk ${email}.`}
     >
