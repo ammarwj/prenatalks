@@ -40,7 +40,7 @@ export default function DashboardKalkulatorPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-foreground">
             Kalkulator Kehamilan
@@ -49,7 +49,9 @@ export default function DashboardKalkulatorPage() {
             Hasil dapat disimpan sebagai HPHT pada profil kehamilan Anda.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* shrink-0 supaya grup ini turun utuh ke baris baru saat sempit,
+            bukan terjepit sampai pill-nya membungkus satu per satu. */}
+        <div className="flex shrink-0 flex-wrap gap-2">
           {CROSS_LINKS.map(({ href, label, Icon }) => (
             <Link
               key={href}
