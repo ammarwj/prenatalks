@@ -3,16 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { CalendarHeart, Info } from "lucide-react";
 
 import { CircularProgress } from "@/components/shared/circular-progress";
 import { FormField } from "@/components/shared/form-field";
+import { HphtDatePicker } from "@/components/shared/hpht-date-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { formatLongDate } from "@/lib/date-utils";
 import { apiPost, apiPut, ApiRequestError } from "@/lib/api-client";
 import type { CalculatorResult, Pregnancy } from "@/lib/types";
 import { calculatorSchema, type CalculatorInput } from "@/lib/validations/calculator";
@@ -22,14 +23,6 @@ const TRIMESTER_STYLE: Record<1 | 2 | 3, { ring: string; badge: string }> = {
   2: { ring: "var(--brand-purple)", badge: "border-transparent bg-brand-purple-soft text-brand-purple" },
   3: { ring: "var(--primary)", badge: "border-transparent bg-primary-soft text-primary-text" },
 };
-
-function formatLongDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 export function CalculatorForm({
   mode,
@@ -48,7 +41,7 @@ export function CalculatorForm({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CalculatorInput>({
@@ -97,12 +90,18 @@ export function CalculatorForm({
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <FormField label="Hari Pertama Haid Terakhir (HPHT)" htmlFor="lmp_date" error={errors.lmp_date?.message}>
-                <Input
-                  id="lmp_date"
-                  type="date"
-                  className="h-11 rounded-xl"
-                  aria-invalid={!!errors.lmp_date}
-                  {...register("lmp_date")}
+                <Controller
+                  name="lmp_date"
+                  control={control}
+                  render={({ field }) => (
+                    <HphtDatePicker
+                      id="lmp_date"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      aria-invalid={!!errors.lmp_date}
+                    />
+                  )}
                 />
               </FormField>
             </div>

@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatLongDate } from "@/lib/date-utils";
 import type { Pregnancy, PregnancyStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<PregnancyStatus, string> = {
@@ -15,11 +16,7 @@ const STATUS_STYLE: Record<PregnancyStatus, string> = {
 };
 
 function formatDate(value: string): string {
-  return new Date(`${value.slice(0, 10)}T00:00:00`).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return formatLongDate(value.slice(0, 10));
 }
 
 export function PregnancyHistoryList({ pregnancies }: { pregnancies: Pregnancy[] }) {

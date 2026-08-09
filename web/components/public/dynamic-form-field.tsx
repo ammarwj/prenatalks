@@ -3,6 +3,7 @@
 import { Check, Star } from "lucide-react";
 
 import { FormField } from "@/components/shared/form-field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -155,12 +156,11 @@ function FieldControl({
 
     case "date":
       return (
-        <Input
+        <DatePicker
           id={htmlFor}
-          type="date"
-          className={inputClass}
           value={(value as string) ?? ""}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
+          placeholder={field.placeholder || "Pilih tanggal"}
         />
       );
 

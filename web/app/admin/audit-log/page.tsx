@@ -8,7 +8,7 @@ import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/sup
 import { TablePagination } from "@/components/admin/table-pagination";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -155,30 +155,30 @@ export default function AuditLogPage() {
             <label htmlFor="from" className="mb-1 block text-xs font-semibold text-muted-foreground">
               Dari tanggal
             </label>
-            <Input
+            <DatePicker
               id="from"
-              type="date"
               value={from}
-              onChange={(e) => {
-                setFrom(e.target.value);
+              max={to || undefined}
+              onChange={(value) => {
+                setFrom(value);
                 setPage(1);
               }}
-              className="h-11 w-40 rounded-xl"
+              className="w-44"
             />
           </div>
           <div>
             <label htmlFor="to" className="mb-1 block text-xs font-semibold text-muted-foreground">
               Sampai
             </label>
-            <Input
+            <DatePicker
               id="to"
-              type="date"
               value={to}
-              onChange={(e) => {
-                setTo(e.target.value);
+              min={from || undefined}
+              onChange={(value) => {
+                setTo(value);
                 setPage(1);
               }}
-              className="h-11 w-40 rounded-xl"
+              className="w-44"
             />
           </div>
         </div>

@@ -2,16 +2,13 @@ import Link from "next/link";
 import { Baby, CalendarHeart } from "lucide-react";
 
 import { CircularProgress } from "@/components/shared/circular-progress";
+import { formatLongDate } from "@/lib/date-utils";
 import type { DashboardPregnancy } from "@/lib/types";
 
 function formatDate(isoDate: string | null): string {
   if (!isoDate) return "—";
 
-  return new Date(`${isoDate.slice(0, 10)}T00:00:00`).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return formatLongDate(isoDate.slice(0, 10));
 }
 
 /**

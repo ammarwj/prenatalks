@@ -5,6 +5,7 @@ import { Star } from "lucide-react";
 
 import { FormField } from "@/components/shared/form-field";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -98,7 +99,7 @@ function PreviewControl({
       return <Input id={htmlFor} type="number" className={inputClass} placeholder={field.placeholder} disabled />;
 
     case "date":
-      return <Input id={htmlFor} type="date" className={inputClass} disabled />;
+      return <DatePicker id={htmlFor} onChange={() => {}} placeholder={field.placeholder || "Pilih tanggal"} disabled />;
 
     case "file":
       return <Input id={htmlFor} type="file" className={inputClass} disabled />;

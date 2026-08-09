@@ -33,6 +33,14 @@ const optionalNumericString = z
   .refine((v) => !v || /^\d+(\.\d+)?$/.test(v), "Harus berupa angka");
 
 /**
+ * Usia HPHT maksimum yang diterima — dicerminkan oleh backend di
+ * `CalculatorRequest` / `PregnancyRequest` (`after_or_equal:now()->subDays(300)`).
+ * Batas kalender di hpht-date-picker.tsx ikut konstanta ini agar tidak melenceng
+ * dari aturan zod di bawah.
+ */
+export const HPHT_MAX_AGE_DAYS = 300;
+
+/**
  * HPHT tidak boleh di masa depan dan tidak lebih dari 300 hari lalu — PRD F-03 kriteria terima.
  */
 export function isWithinHphtRange(value: string): boolean {
@@ -41,7 +49,7 @@ export function isWithinHphtRange(value: string): boolean {
 
   const diffDays = (Date.now() - date.getTime()) / 86_400_000;
 
-  return diffDays >= 0 && diffDays <= 300;
+  return diffDays >= 0 && diffDays <= HPHT_MAX_AGE_DAYS;
 }
 
 export const pregnancySchema = z.object({

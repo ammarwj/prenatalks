@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
 
 import { FormField } from "@/components/shared/form-field";
+import { HphtDatePicker } from "@/components/shared/hpht-date-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,12 +110,18 @@ export function PregnancyForm({
         </CardHeader>
         <CardContent className="px-6 pb-6">
           <FormField label="HPHT" htmlFor="lmp_date" error={errors.lmp_date?.message}>
-            <Input
-              id="lmp_date"
-              type="date"
-              className={inputClass}
-              aria-invalid={!!errors.lmp_date}
-              {...register("lmp_date")}
+            <Controller
+              name="lmp_date"
+              control={control}
+              render={({ field }) => (
+                <HphtDatePicker
+                  id="lmp_date"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-invalid={!!errors.lmp_date}
+                />
+              )}
             />
           </FormField>
           <p className="mt-2 text-xs text-muted-foreground">

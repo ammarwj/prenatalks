@@ -10,6 +10,7 @@ import { FormField } from "@/components/shared/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -231,7 +232,19 @@ export function ArticleForm({
             <Textarea id="sourceReference" {...register("sourceReference")} />
           </FormField>
           <FormField label="Tanggal tinjauan" htmlFor="reviewedAt" error={errors.reviewedAt?.message}>
-            <Input id="reviewedAt" type="date" className={inputClass} {...register("reviewedAt")} />
+            <Controller
+              name="reviewedAt"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  id="reviewedAt"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-invalid={!!errors.reviewedAt}
+                />
+              )}
+            />
           </FormField>
         </CardContent>
       </Card>
