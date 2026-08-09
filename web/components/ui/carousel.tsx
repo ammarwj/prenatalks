@@ -58,14 +58,40 @@ function Carousel({
     },
     plugins
   )
-  const [canScrollPrev, setCanScrollPrev] = React.useState(false)
-  const [canScrollNext, setCanScrollNext] = React.useState(false)
+  /**
+   * Status bisa-geser dibaca langsung dari embla lewat useSyncExternalStore,
+   * bukan disalin ke useState lewat efek. Menyalinnya berarti memanggil
+   * setState sinkron di dalam efek (memicu render berantai, dilarang aturan
+   * react-hooks/set-state-in-effect) dan menyimpan turunan state yang bisa
+   * basi. Berlangganan ulang saat `api` berubah sekaligus mengambil nilai
+   * awalnya, jadi tidak perlu sinkronisasi manual di awal.
+   */
+  const subscribe = React.useCallback(
+    (onStoreChange: () => void) => {
+      if (!api) return () => {}
 
-  const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) return
-    setCanScrollPrev(api.canScrollPrev())
-    setCanScrollNext(api.canScrollNext())
-  }, [])
+      api.on("reInit", onStoreChange)
+      api.on("select", onStoreChange)
+
+      return () => {
+        api.off("reInit", onStoreChange)
+        api.off("select", onStoreChange)
+      }
+    },
+    [api]
+  )
+
+  const canScrollPrev = React.useSyncExternalStore(
+    subscribe,
+    () => api?.canScrollPrev() ?? false,
+    () => false
+  )
+
+  const canScrollNext = React.useSyncExternalStore(
+    subscribe,
+    () => api?.canScrollNext() ?? false,
+    () => false
+  )
 
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev()
@@ -92,17 +118,6 @@ function Carousel({
     if (!api || !setApi) return
     setApi(api)
   }, [api, setApi])
-
-  React.useEffect(() => {
-    if (!api) return
-    onSelect(api)
-    api.on("reInit", onSelect)
-    api.on("select", onSelect)
-
-    return () => {
-      api?.off("select", onSelect)
-    }
-  }, [api, onSelect])
 
   return (
     <CarouselContext.Provider
