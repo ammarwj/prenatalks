@@ -7,6 +7,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -46,9 +47,28 @@ class AppServiceProvider extends ServiceProvider
                 ->line('Jika Anda tidak meminta ini, abaikan saja email ini — password Anda tetap aman.');
         });
 
-        // Tautan verifikasi mengarah ke endpoint API yang sama seperti sebelumnya
-        // (lihat routes/api.php: verification.verify); hanya tampilan & copy
-        // email-nya yang disesuaikan dengan identitas PrenaTalks di sini.
+        // Tautan verifikasi awalnya mengarah langsung ke endpoint API
+        // (POST /auth/verify-email/{id}/{hash}) — kalau diklik dari email itu
+        // jadi GET dan gagal (405), karena rutenya cuma menerima POST. Di sini
+        // signed URL backend tetap dibuat sama seperti bawaan Laravel (supaya
+        // signature-nya valid), tapi id/hash/expires/signature diteruskan ke
+        // halaman Next.js — lihat
+        // web/app/(auth)/verifikasi-email/[id]/[hash]/page.tsx — yang lalu
+        // memanggil endpoint API itu sendiri lewat fetch (POST) sambil
+        // menampilkan UI PrenaTalks, sama seperti alur reset password.
+        VerifyEmail::createUrlUsing(function (User $user) {
+            $backendUrl = URL::temporarySignedRoute(
+                'verification.verify',
+                now()->addMinutes(config('auth.verification.expire', 60)),
+                ['id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification())]
+            );
+
+            $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
+            $query = parse_url($backendUrl, PHP_URL_QUERY);
+
+            return "{$frontendUrl}/verifikasi-email/{$user->getKey()}/".sha1($user->getEmailForVerification())."?{$query}";
+        });
+
         VerifyEmail::toMailUsing(function (User $user, string $url) {
             return (new MailMessage)
                 ->subject('Verifikasi Email PrenaTalks Anda')
