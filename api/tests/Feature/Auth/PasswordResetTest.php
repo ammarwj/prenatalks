@@ -3,7 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -23,7 +23,7 @@ class PasswordResetTest extends TestCase
 
         $response->assertOk()->assertJson(['success' => true]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
+        Notification::assertSentTo($user, ResetPasswordNotification::class, function (ResetPasswordNotification $notification) use ($user) {
             $mail = $notification->toMail($user);
             $url = $mail->actionUrl;
 
@@ -50,7 +50,7 @@ class PasswordResetTest extends TestCase
         $this->withoutMiddleware()->postJson('/api/v1/auth/forgot-password', ['email' => 'siti@example.com']);
 
         $token = null;
-        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use (&$token) {
+        Notification::assertSentTo($user, ResetPasswordNotification::class, function (ResetPasswordNotification $notification) use (&$token) {
             $token = $notification->token;
 
             return true;

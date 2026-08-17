@@ -11,6 +11,29 @@ services:
       db:
         condition: service_healthy
 
+  # Pemroses antrean database (email verifikasi & reset password, ekspor
+  # submission). Tanpa service ini job hanya menumpuk di tabel `jobs` dan
+  # email tidak pernah terkirim.
+  #
+  # Urutan --queue menentukan prioritas: "emails" selalu dikuras lebih dulu
+  # sampai kosong, jadi ekspor submission yang berjalan lama di "default"
+  # tidak menahan email verifikasi/reset password di belakangnya.
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan queue:work --queue=emails,default --tries=3 --max-time=3600
+    volumes:
+      - ./api:/var/www/html
+    environment:
+      - DB_HOST=db
+    # --max-time membuat worker berhenti sendiri tiap jam (higienis untuk
+    # memori PHP yang long-running); restart-nya yang menghidupkan lagi.
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
   nginx:
     image: nginx:alpine
     ports:

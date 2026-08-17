@@ -23,7 +23,7 @@ prenatalks/
 ├─ api/                  Laravel 13 — REST API di /api/v1 (lihat api/README.md)
 ├─ web/                  Next.js 16 + shadcn/ui + Tailwind v4
 ├─ docker/               Dockerfile PHP-FPM & konfigurasi Nginx
-├─ docker-compose.yml    app (PHP-FPM) · nginx :8000 · postgres :5432
+├─ docker-compose.yml    app (PHP-FPM) · queue (worker) · nginx :8000 · postgres :5432
 ├─ PRD.md                Sumber kebenaran produk: merek, fitur, skema DB, API
 ├─ BUSINESS_FLOWS.md     Diagram alur proses (Mermaid) per fitur
 └─ IMPLEMENTATION_CHECKLIST.md   Checklist implementasi task-by-task
@@ -45,6 +45,11 @@ docker compose exec app php artisan migrate --seed
 ```
 
 API tersedia di `http://localhost:8000/api/v1`. Cek kesehatan: `GET /api/v1/health`.
+
+Service `queue` menjalankan `php artisan queue:work` untuk email (verifikasi &
+reset password) dan ekspor submission. Kalau service ini mati, job hanya
+menumpuk di tabel `jobs` dan email tidak terkirim — pantau dengan
+`docker compose logs -f queue`.
 
 Seeder mengisi kuesioner risiko awal, kategori, item checklist, setting situs, dan satu user uji (`test@example.com`).
 
