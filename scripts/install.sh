@@ -350,14 +350,73 @@ chmod 640 "$API_ENV_FILE"
 if chown 1000:1000 "$API_ENV_FILE" 2>/dev/null || $SUDO chown 1000:1000 "$API_ENV_FILE" 2>/dev/null; then
     ok "$API_ENV_FILE dimiliki uid 1000 (user 'laravel' di dalam container), mode 640"
 else
-    warn "gagal chown $API_ENV_FILE ke uid 1000 — container mungkin tidak bisa membacanya."
+    # Tanpa hak root, chown tidak mungkin — turunkan mode supaya container tetap
+    # bisa membaca, daripada container gagal start dengan .env tak terbaca.
+    chmod 644 "$API_ENV_FILE"
+    warn "gagal chown $API_ENV_FILE ke uid 1000 → mode diturunkan ke 644 agar container tetap bisa membacanya."
+    warn "Jalankan skrip ini sebagai root kalau ingin .env tetap 640 dan tidak terbaca user lain di server."
+fi
+
+# Kalau api/.env dipertahankan sementara .env Compose ditulis ulang dengan
+# password acak yang baru, keduanya dijamin berbeda: Postgres dibuat dengan
+# password dari .env, Laravel menyodorkan password dari api/.env, dan health
+# selamanya menjawab "database":"unavailable". api/.env yang menang, karena
+# itulah yang dipakai aplikasi (dan mungkin cocok dengan volume DB yang sudah ada).
+api_db_pass="$(grep '^DB_PASSWORD=' "$API_ENV_FILE" | cut -d= -f2- | sed 's/^"//;s/"$//')"
+api_db_user="$(grep '^DB_USERNAME=' "$API_ENV_FILE" | cut -d= -f2- | sed 's/^"//;s/"$//')"
+api_db_name="$(grep '^DB_DATABASE=' "$API_ENV_FILE" | cut -d= -f2- | sed 's/^"//;s/"$//')"
+
+if [ -n "$api_db_pass" ] && [ "$api_db_pass" != "$DB_PASSWORD" ]; then
+    warn "DB_PASSWORD di $ENV_FILE berbeda dengan di api/.env — disamakan mengikuti api/.env."
+    DB_PASSWORD="$api_db_pass"
+    set_env DB_PASSWORD "$(esc_compose "$DB_PASSWORD")" "$ENV_FILE"
+fi
+if [ -n "$api_db_user" ] && [ "$api_db_user" != "$DB_USERNAME" ]; then
+    warn "DB_USERNAME disamakan mengikuti api/.env: $api_db_user"
+    DB_USERNAME="$api_db_user"; set_env DB_USERNAME "$DB_USERNAME" "$ENV_FILE"
+fi
+if [ -n "$api_db_name" ] && [ "$api_db_name" != "$DB_DATABASE" ]; then
+    warn "DB_DATABASE disamakan mengikuti api/.env: $api_db_name"
+    DB_DATABASE="$api_db_name"; set_env DB_DATABASE "$DB_DATABASE" "$ENV_FILE"
 fi
 
 # ============================================================== 4. build API ==
 step "4/8  Build & menjalankan sisi API"
 
 compose build app nginx
-compose up -d db app queue scheduler nginx
+compose up -d db
+info "menunggu Postgres siap…"
+for _ in $(seq 1 30); do
+    compose exec -T db pg_isready -U "$DB_USERNAME" -d "$DB_DATABASE" >/dev/null 2>&1 && break
+    sleep 2
+done
+
+# Password Postgres hanya dipakai saat volume PERTAMA kali dibuat. Kalau volume
+# lama masih ada, isinya memakai password lama dan .env baru tidak akan cocok —
+# gejalanya "database":"unavailable" walau semua berkas terlihat benar.
+if compose exec -T -e PGPASSWORD="$DB_PASSWORD" db \
+        psql -h db -U "$DB_USERNAME" -d "$DB_DATABASE" -tAc 'select 1' >/dev/null 2>&1; then
+    ok "kredensial database cocok"
+else
+    warn "Postgres menolak DB_USERNAME/DB_PASSWORD dari .env."
+    info "Biasanya karena volume database sudah dibuat lebih dulu dengan password lain."
+    if confirm "Samakan password user Postgres dengan nilai di .env sekarang (ALTER USER)?"; then
+        compose exec -T db psql -U "$DB_USERNAME" -d postgres \
+            -c "ALTER USER \"$DB_USERNAME\" WITH PASSWORD '$DB_PASSWORD';" >/dev/null 2>&1 \
+            && ok "password user Postgres disamakan" \
+            || die "ALTER USER gagal. Kalau database masih kosong, paling bersih: docker compose -f docker-compose.prod.yml down -v lalu jalankan skrip ini lagi."
+    else
+        die "Perbaiki dulu: samakan DB_PASSWORD di .env dan api/.env, atau buang volume lama dengan 'down -v' bila datanya memang masih kosong."
+    fi
+fi
+
+# `app` dinyalakan sendirian dulu: ia yang mengisi volume api_storage dengan
+# struktur storage/app dari image. Kalau app, queue, dan scheduler dibuat
+# serentak di atas volume yang masih kosong, ketiganya berebut menyalin isi
+# awal dan Docker menggagalkan salah satunya dengan
+# "failed to mkdir .../private/exports: file exists".
+compose up -d app
+compose up -d queue scheduler nginx
 ok "container API jalan"
 
 info "menunggu API sehat…"
@@ -369,7 +428,20 @@ for _ in $(seq 1 45); do
 done
 case "$health" in
     *'"database":"connected"'*) ok "GET /api/v1/health → database connected" ;;
-    *) compose logs --tail 40 app; die "API tidak kunjung sehat. Lihat log di atas." ;;
+    *)
+        warn "respons terakhir: ${health:-(kosong)}"
+        info "--- galat koneksi database dari dalam container app ---"
+        compose exec -T app php artisan tinker --execute='
+try { DB::connection()->getPdo(); echo "PDO OK\n"; }
+catch (Throwable $e) { echo get_class($e), ": ", $e->getMessage(), "\n"; }' 2>&1 | tail -5
+        info "--- status container ---"
+        compose ps -a
+        info "--- log db ---"
+        compose logs --tail 15 db
+        info "--- log app ---"
+        compose logs --tail 15 app | grep -viE '"GET /index.php" 200' | tail -10
+        die "API tidak kunjung sehat. Lihat galat di atas."
+        ;;
 esac
 
 # ==================================================== 5. migrasi, seed, admin ==

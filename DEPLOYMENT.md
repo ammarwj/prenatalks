@@ -242,9 +242,12 @@ Sisi API dulu, **tanpa** service `web` — image web baru dibangun di langkah 8,
 ```bash
 cd /opt/prenatalks
 docker compose -f docker-compose.prod.yml build app nginx
-docker compose -f docker-compose.prod.yml up -d db app queue scheduler nginx
+docker compose -f docker-compose.prod.yml up -d db app
+docker compose -f docker-compose.prod.yml up -d queue scheduler nginx
 docker compose -f docker-compose.prod.yml ps
 ```
+
+> `app` sengaja dinyalakan sendirian dulu. Ia yang mengisi volume `api_storage` dengan struktur `storage/app` dari image; kalau `app`, `queue`, dan `scheduler` dibuat serentak di atas volume yang masih kosong, ketiganya berebut menyalin isi awal dan Docker menggagalkan salah satunya dengan `failed to mkdir .../private/exports: file exists`. Setelah volume terisi, urutan tidak lagi penting.
 
 Yang naik: `prenatalks_db` (`127.0.0.1:5430`), `prenatalks_app` (PHP-FPM), `prenatalks_queue`, `prenatalks_scheduler`, `prenatalks_nginx` (`127.0.0.1:8003`).
 

@@ -33,7 +33,10 @@ echo "==> build image"
 compose build
 
 echo "==> menjalankan container baru"
-compose up -d --force-recreate db app queue scheduler nginx web
+# app lebih dulu (lihat catatan volume api_storage di scripts/install.sh),
+# baru sisanya.
+compose up -d --force-recreate db app
+compose up -d --force-recreate queue scheduler nginx web
 
 API_PORT="$(grep '^API_PORT=' "$ENV_FILE" | cut -d= -f2-)"
 echo "==> menunggu API sehat"
