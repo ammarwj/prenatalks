@@ -51,6 +51,36 @@ docker/web/Dockerfile          Next.js standalone (multi-stage)
 
 ---
 
+## Jalur cepat — `scripts/install.sh`
+
+Seluruh langkah 3–8 (env, build, migrasi, seed, akun admin, vhost Nginx, SSL, build web) bisa dijalankan satu perintah:
+
+```bash
+cd /opt/prenatalks
+sudo ./scripts/install.sh
+```
+
+Skrip bertanya domain, port, email admin, dan SMTP — tekan Enter untuk memakai nilai bawaan (`prenatalks.id`, `api.prenatalks.id`, 3003/8003/5430). Password Postgres, `APP_KEY`, `JWT_SECRET`, dan password admin dibuat acak; password admin dicetak sekali di akhir.
+
+```bash
+sudo ./scripts/install.sh --yes                       # non-interaktif, semua bawaan
+sudo ./scripts/install.sh --skip-ssl --skip-web       # DNS belum siap: API dulu, web menyusul
+./scripts/install.sh --help
+```
+
+Skrip aman dijalankan ulang: `.env` yang sudah ada tidak ditimpa tanpa izin (dan dicadangkan kalau ditimpa), seeder dilewati bila data awal sudah terisi, vhost yang sudah ada dibiarkan, dan Certbot dilewati bila sertifikat sudah terbit. **DNS tetap harus diarahkan lebih dulu** (langkah 1) — Certbot dan build web sama-sama bergantung padanya.
+
+Dua skrip pendamping:
+
+```bash
+./scripts/deploy.sh        # redeploy: pull → build → recreate → migrate  (langkah 12)
+./scripts/backup.sh        # dump DB + arsip volume unggahan               (langkah 9.1)
+```
+
+Sisa dokumen ini menjelaskan tiap langkah yang dikerjakan skrip tersebut — baca kalau ada yang gagal, atau kalau ingin memasang manual.
+
+---
+
 ## 1. DNS
 
 Di panel DNS `prenatalks.id`, buat tiga record A ke IP publik VPS:
@@ -470,10 +500,19 @@ tapi **jangan dipakai untuk produksi** — nilai itu ikut ter-inline ke bundle b
 
 ### 9.1 Backup database
 
+Sudah tersedia sebagai `scripts/backup.sh` (dump DB + arsip volume unggahan + retensi 14 hari):
+
 ```bash
-sudo mkdir -p /var/backups/prenatalks && sudo chown "$USER":"$USER" /var/backups/prenatalks
-nano ~/backup-prenatalks.sh
+sudo mkdir -p /var/backups/prenatalks
+/opt/prenatalks/scripts/backup.sh          # uji sekali secara manual
+crontab -e
 ```
+
+```cron
+30 2 * * * /opt/prenatalks/scripts/backup.sh >> /var/log/prenatalks-backup.log 2>&1
+```
+
+Isinya, kalau ingin membuat sendiri:
 
 ```bash
 #!/usr/bin/env bash
@@ -484,7 +523,7 @@ docker compose -f docker-compose.prod.yml exec -T db \
   pg_dump -U prenatalks prenatalks | gzip > "/var/backups/prenatalks/db-$STAMP.sql.gz"
 
 # Berkas unggahan TIDAK ada di dump SQL — ikut dicadangkan dari volume.
-docker run --rm -v prenatalks_api_storage:/data -v /var/backups/prenatalks:/backup alpine \
+docker run --rm -v prenatalks-prod_api_storage:/data -v /var/backups/prenatalks:/backup alpine \
   tar czf "/backup/storage-$STAMP.tar.gz" -C /data .
 
 find /var/backups/prenatalks -name '*.gz' -mtime +14 -delete
@@ -578,7 +617,7 @@ sudo tail -f /var/log/nginx/api.prenatalks.id.error.log
 
 ## 12. Redeploy
 
-Simpan sebagai `/opt/prenatalks/deploy.sh`:
+Sudah tersedia sebagai `scripts/deploy.sh` — jalankan `./scripts/deploy.sh` (atau `--no-pull` untuk memakai kode yang sudah ada). Isinya:
 
 ```bash
 #!/usr/bin/env bash
@@ -603,10 +642,6 @@ echo "Deploy selesai: $(git rev-parse --short HEAD)"
 
 Downtime-nya beberapa detik saat container diganti — tidak ada `artisan down` karena flag maintenance disimpan di dalam container dan hilang begitu container dibuat ulang, jadi ia hanya menambah risiko halaman kosong tanpa manfaat. Kalau ada migrasi yang merusak kompatibilitas dengan kode lama, jalankan migrasinya manual di jendela sepi, bukan lewat skrip ini.
 
-```bash
-chmod +x /opt/prenatalks/deploy.sh
-```
-
 Tiga hal yang wajib diingat di jalur Docker ini:
 
 - **`--force-recreate` bukan `restart`.** `opcache.validate_timestamps=0` berarti PHP memegang kode lama sampai container-nya benar-benar diganti.
@@ -626,8 +661,9 @@ Tiga hal yang wajib diingat di jalur Docker ini:
 | Tautan verifikasi selalu "tidak valid" | `X-Forwarded-Proto` tidak diteruskan Nginx host, atau `APP_URL` salah | Cek `proxy_set_header X-Forwarded-Proto $scheme;` ada di vhost API; `APP_URL=https://api.prenatalks.id` |
 | Tautan email mengarah ke `localhost:3000` | `FRONTEND_URL` belum diubah | Perbaiki `api/.env` → `up -d --force-recreate app queue` |
 | Perubahan `api/.env` tidak berpengaruh | Config ter-cache saat container start | Buat ulang container (`--force-recreate`), bukan sekadar `restart` |
+| `/api/v1/health` menjawab `{"app":"Laravel","database":"unavailable"}` | `.env` tidak terbaca di dalam container — hampir selalu karena `api/.env` belum ada saat `up` pertama, sehingga Docker membuatkan **direktori** kosong di jalur itu | Lihat kotak di bawah tabel |
 | Perubahan `NEXT_PUBLIC_*` tidak berpengaruh | Di-inline saat build image | `docker compose -f docker-compose.prod.yml build web && up -d web` |
-| Gambar cover 404 setelah deploy | Volume `api_storage` terlepas/terhapus | `docker volume ls \| grep prenatalks`; pulihkan dari backup `storage-*.tar.gz` |
+| Gambar cover 404 setelah deploy | Volume `api_storage` terlepas/terhapus | `docker volume ls \| grep prenatalks-prod`; pulihkan dari backup `storage-*.tar.gz` |
 | Ekspor submission "siap" tapi unduhannya 404 | Volume `api_storage` tidak dibagi ke container `app` | Pastikan `app` dan `queue` sama-sama mount `api_storage` di `/var/www/html/storage/app` |
 | 502 di `prenatalks.id` | Container `web` mati atau port host salah | `docker compose ... ps web`; `curl -I 127.0.0.1:3003` |
 | 502 di `api.prenatalks.id` | Container `nginx` mati atau `app` belum siap | `curl -I 127.0.0.1:8003`; `docker compose ... logs nginx app` |
@@ -639,6 +675,36 @@ Tiga hal yang wajib diingat di jalur Docker ini:
 | Halaman publik ter-deploy dalam keadaan kosong padahal datanya ada | Image web dibangun saat API 503/maintenance | Build ulang `web` selagi API melayani normal |
 | Build web gagal: `Cannot find module '../lightningcss.linux-*.node'` | `web/package-lock.json` dibuat di macOS dan hanya memuat binary darwin | Sudah ditangani `docker/web/Dockerfile` (salin `package.json` saja lalu `npm install`) — jangan mengubahnya jadi `npm ci` sebelum lockfile diregenerasi di Linux |
 | `db:seed` mati: `Call to undefined function Database\Factories\fake()` | `DatabaseSeeder` memakai factory (butuh `fakerphp/faker`, paket dev) | Jalankan seeder per kelas seperti di langkah 5.2 |
+
+### `{"app":"Laravel","database":"unavailable"}`
+
+Dua tanda dalam satu respons, dan keduanya berasal dari sebab yang sama: **container jalan tanpa `.env`**. `app` jatuh ke nilai bawaan `config/app.php` (`Laravel`, bukan `PrenaTalks`) dan `DB_HOST` jatuh ke `127.0.0.1` — yang di dalam container berarti container itu sendiri, bukan service `db`.
+
+Penyebab tersering: `docker compose up` dijalankan **sebelum** `api/.env` dibuat. Bind mount `./api/.env:/var/www/html/.env` menunjuk berkas yang belum ada, dan Docker menyelesaikannya dengan membuatkan **direktori kosong** bernama `api/.env` di host, lalu me-mount direktori itu.
+
+Periksa:
+
+```bash
+ls -ld /opt/prenatalks/api/.env        # kalau diawali 'd', itu direktori — inilah masalahnya
+docker compose -f docker-compose.prod.yml exec app ls -la /var/www/html/.env
+```
+
+Perbaiki:
+
+```bash
+cd /opt/prenatalks
+docker compose -f docker-compose.prod.yml down
+rmdir api/.env                                   # buang direktori palsunya
+cp api/.env.example api/.env && nano api/.env    # isi sesuai langkah 3.2
+docker compose -f docker-compose.prod.yml up -d --force-recreate
+curl -s http://127.0.0.1:8003/api/v1/health      # harus PrenaTalks + connected
+```
+
+Kalau `api/.env` ternyata **sudah** berupa berkas yang benar, sebabnya yang kedua: container start lebih dulu dan meng-cache config lama. `restart` tidak cukup — pakai `up -d --force-recreate app queue scheduler`.
+
+> Sejak `docker/php/entrypoint.sh` diperketat, kasus ini tidak lagi senyap: container berhenti dengan pesan `FATAL: /var/www/html/.env adalah DIREKTORI` di `docker compose logs app`, bukan menyala dengan konfigurasi kosong.
+
+---
 
 ---
 
@@ -657,7 +723,7 @@ Tiga hal yang wajib diingat di jalur Docker ini:
 | Scheduler | tidak ada | service `scheduler` |
 | Storage | ikut folder kerja | volume `api_storage` |
 
-Keduanya memakai nama project Compose yang sama (`prenatalks`), jadi **jangan menjalankan keduanya bersamaan di satu mesin** — container dan volume-nya akan saling rebut. Di VPS hanya `docker-compose.prod.yml` yang dipakai.
+Nama project Compose-nya juga sengaja dibedakan — pengembangan memakai nama folder (`prenatalks`), produksi memakai `prenatalks-prod`. Kalau sama, menjalankan yang satu di mesin yang juga memakai yang lain akan me-**recreate** container milik tetangganya dan memperebutkan volume dengan nama yang sama. Konsekuensinya volume produksi bernama `prenatalks-prod_postgres_data` dan `prenatalks-prod_api_storage`.
 
 ## Lampiran B — kalau ingin jalur native (tanpa Docker)
 

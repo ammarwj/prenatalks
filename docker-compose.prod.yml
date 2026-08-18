@@ -6,7 +6,11 @@
 #
 #   docker compose -f docker-compose.prod.yml up -d --build
 
-name: prenatalks
+# Nama project sengaja BEDA dari stack pengembangan (docker-compose.yml, yang
+# memakai nama folder: "prenatalks"). Kalau sama, menjalankan salah satunya di
+# mesin yang juga memakai stack satunya akan me-recreate container milik
+# tetangganya dan memperebutkan volume dengan nama yang sama.
+name: prenatalks-prod
 
 x-api-service: &api-service
   build:
