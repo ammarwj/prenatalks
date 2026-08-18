@@ -23,9 +23,11 @@ prenatalks/
 ├─ api/                  Laravel 13 — REST API di /api/v1 (lihat api/README.md)
 ├─ web/                  Next.js 16 + shadcn/ui + Tailwind v4
 ├─ docker/               Dockerfile PHP-FPM & konfigurasi Nginx
-├─ docker-compose.yml    app (PHP-FPM) · queue (worker) · nginx :8000 · postgres :5432
+├─ docker-compose.yml    Pengembangan: app (PHP-FPM) · queue · nginx :8000 · postgres :5432
+├─ docker-compose.prod.yml  Produksi: + scheduler & web, port 127.0.0.1 3003/8003/5430
 ├─ PRD.md                Sumber kebenaran produk: merek, fitur, skema DB, API
 ├─ BUSINESS_FLOWS.md     Diagram alur proses (Mermaid) per fitur
+├─ DEPLOYMENT.md         Panduan deploy ke VPS (prenatalks.id + api.prenatalks.id)
 └─ IMPLEMENTATION_CHECKLIST.md   Checklist implementasi task-by-task
 ```
 
@@ -97,6 +99,10 @@ cd web && bun run build                       # type-check + production build
 ```
 
 CI (`.github/workflows/api-ci.yml`) menjalankan Pint, migrasi terhadap PostgreSQL 16, dan test suite pada setiap PR yang menyentuh `api/**`.
+
+## Deployment
+
+Produksi berjalan di satu VPS (`/opt/prenatalks`) memakai `docker-compose.prod.yml`: `prenatalks.id` (Next.js, `127.0.0.1:3003`) dan `api.prenatalks.id` (Laravel, `127.0.0.1:8003`), keduanya di balik Nginx host yang memegang TLS; PostgreSQL di `127.0.0.1:5430`. Langkah lengkap — DNS, environment, urutan build, Nginx, SSL, queue worker, backup, dan skrip redeploy — ada di [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## Konvensi
 

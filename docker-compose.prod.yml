@@ -1,0 +1,101 @@
+# Stack produksi PrenaTalks — dijalankan di /opt/prenatalks.
+#
+# Port yang dibuka ke host sengaja dikunci ke 127.0.0.1 (Nginx host yang
+# memegang TLS dan mem-proxy ke sini), dan dipilih supaya tidak bentrok dengan
+# stack lain di VPS: web 3003, api 8003, postgres 5430.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+name: prenatalks
+
+x-api-service: &api-service
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile.prod
+  image: prenatalks-api:latest
+  restart: unless-stopped
+  volumes:
+    - ./api/.env:/var/www/html/.env:ro
+    - api_storage:/var/www/html/storage/app
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *api-service
+    container_name: prenatalks_app
+
+  # Pemroses antrean: email verifikasi & reset password, ekspor submission.
+  # Tanpa service ini job hanya menumpuk di tabel `jobs` dan tidak ada email
+  # yang terkirim — tanpa error apa pun ke pengguna.
+  #
+  # Urutan --queue menentukan prioritas: "emails" dikuras sampai kosong lebih
+  # dulu, jadi ekspor besar di "default" tidak menahan email verifikasi.
+  queue:
+    <<: *api-service
+    container_name: prenatalks_queue
+    command: php artisan queue:work --queue=emails,default --tries=3 --backoff=10 --max-time=3600 --sleep=3
+
+  scheduler:
+    <<: *api-service
+    container_name: prenatalks_scheduler
+    command: php artisan schedule:work
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile.prod
+    image: prenatalks-nginx:latest
+    container_name: prenatalks_nginx
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${API_PORT:-8003}:80"
+    volumes:
+      # Read-only: berkas unggahan ditulis oleh container app, nginx hanya menyajikan.
+      - api_storage:/var/www/html/storage/app:ro
+    depends_on:
+      - app
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+      args:
+        # Nilai NEXT_PUBLIC_* di-inline saat build — mengubahnya wajib --build ulang.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?set NEXT_PUBLIC_API_URL di .env}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?set NEXT_PUBLIC_SITE_URL di .env}
+    image: prenatalks-web:latest
+    container_name: prenatalks_web
+    restart: unless-stopped
+    environment:
+      # Runtime (dibaca Route Handler di sisi server), bukan build-time.
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-pt_refresh}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3003}:3000"
+
+  db:
+    image: postgres:16-alpine
+    container_name: prenatalks_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-prenatalks}
+      POSTGRES_USER: ${DB_USERNAME:-prenatalks}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD di .env}
+    ports:
+      # Dibuka ke loopback saja — untuk pg_dump & psql dari host, bukan publik.
+      - "127.0.0.1:${DB_PORT_HOST:-5430}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-prenatalks} -d ${DB_DATABASE:-prenatalks}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  # Berkas unggahan + berkas ekspor. Kode ikut ke dalam image, tapi isi
+  # storage/app HARUS di volume — kalau tidak, semua unggahan hilang setiap
+  # kali image dibangun ulang.
+  api_storage:

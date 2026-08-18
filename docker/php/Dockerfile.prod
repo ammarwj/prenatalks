@@ -1,0 +1,64 @@
+# Image produksi PHP-FPM: kode ikut ke dalam image (bukan bind mount seperti
+# docker-compose.yml pengembangan), vendor tanpa dev-dependency, opcache menyala.
+
+FROM php:8.4-fpm-alpine AS base
+
+RUN apk add --no-cache \
+        postgresql-dev \
+        libzip-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        libwebp-dev \
+        freetype-dev \
+        icu-dev \
+        oniguruma-dev \
+        $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_pgsql \
+        pgsql \
+        mbstring \
+        bcmath \
+        exif \
+        pcntl \
+        intl \
+        zip \
+        gd \
+        opcache \
+    && apk del $PHPIZE_DEPS
+
+COPY docker/php/php.prod.ini /usr/local/etc/php/conf.d/99-prenatalks.ini
+
+WORKDIR /var/www/html
+
+RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
+
+# --- Tahap vendor: composer install dulu supaya layer-nya bisa di-cache ---
+FROM base AS vendor
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY api/composer.json api/composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+
+COPY api/ ./
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-scripts
+
+# --- Tahap runtime ---
+FROM base AS runtime
+
+COPY --from=vendor --chown=laravel:laravel /var/www/html /var/www/html
+COPY --chown=laravel:laravel docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && rm -rf /var/www/html/tests /var/www/html/phpunit.xml \
+    && mkdir -p storage/app/public storage/app/private \
+       storage/framework/cache storage/framework/sessions storage/framework/views \
+       storage/logs bootstrap/cache \
+    && chown -R laravel:laravel storage bootstrap/cache
+
+USER laravel
+
+EXPOSE 9000
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]

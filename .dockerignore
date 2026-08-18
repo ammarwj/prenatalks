@@ -1,0 +1,36 @@
+# Git & dokumentasi
+.git
+.github
+*.md
+!api/README.md
+
+# Node / Next.js
+web/node_modules
+web/.next
+web/out
+web/.vercel
+web/*.tsbuildinfo
+
+# PHP
+api/vendor
+api/node_modules
+api/.phpunit.result.cache
+api/.phpunit.cache
+api/storage/logs/*
+api/storage/framework/cache/*
+api/storage/framework/sessions/*
+api/storage/framework/views/*
+api/bootstrap/cache/*.php
+api/public/storage
+
+# Rahasia — .env disuntikkan saat runtime, tidak pernah ikut ke image
+.env
+.env.*
+api/.env
+api/.env.*
+web/.env
+web/.env.*
+
+# Aset besar yang tidak dipakai aplikasi
+image.png
+logo.png

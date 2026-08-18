@@ -6,6 +6,11 @@ const apiHost = new URL(apiUrl);
 const isLocalApi = ["localhost", "127.0.0.1", "0.0.0.0", "::1"].includes(apiHost.hostname);
 
 const nextConfig: NextConfig = {
+  // Build standalone (.next/standalone) — dipakai image produksi di
+  // docker/web/Dockerfile supaya runtime hanya berisi server + dependensi
+  // yang benar-benar dipakai, tanpa node_modules lengkap.
+  output: "standalone",
+
   images: {
     // Next.js 16 memblokir optimasi gambar dari IP lokal secara bawaan
     // (perlindungan SSRF). Di produksi API berada di host publik sehingga

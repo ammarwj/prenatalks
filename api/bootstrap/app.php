@@ -24,6 +24,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Produksi berjalan di balik Nginx host (TLS) → Nginx container →
+        // PHP-FPM. Tanpa mempercayai proxy, Laravel melihat skema `http`,
+        // sehingga signed URL verifikasi email dibangun dan diperiksa dengan
+        // skema berbeda dari yang diklik pengguna — verifikasi selalu gagal.
+        // `at: '*'` aman di sini karena satu-satunya jalan masuk ke container
+        // adalah Nginx host: port container hanya di-bind ke 127.0.0.1.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);
