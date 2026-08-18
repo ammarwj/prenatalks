@@ -423,10 +423,49 @@ Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation): tamu →
 
 ## F-15 · Akses Tenaga Kesehatan (P2 — pasca-rilis)
 
-- [ ] Mekanisme consent eksplisit (dapat dicabut)
-- [ ] Akses berbasis kode tautan
-- [ ] Pencatatan di `audit_logs`
-- [ ] Tampilan hasil assessment untuk tenaga kesehatan + catatan edukasi
+**Backend**
+- [x] Mekanisme consent eksplisit (dapat dicabut) — migrasi `health_worker_consents` + `ConsentController` (daftar, cari penerima, beri, buat ulang kode, cabut, baca catatan). Pencabutan menulis `revoked_at`, bukan menghapus baris
+- [x] Akses berbasis kode tautan — `HealthWorkerConsentService` membuat kode acak 40 karakter, menyimpannya sebagai **hash SHA-256** persis seperti `refresh_tokens.token_hash`, dan menukarnya lewat `POST /health-worker/access`
+- [x] Pencatatan di `audit_logs` — pemberian/pencabutan/pembuatan ulang tercatat lewat trait `Auditable` pada model, sedangkan **pembacaan** dicatat eksplisit sebagai aksi baru `accessed` (`AuditRecorder::record`) karena membaca tidak mengubah baris apa pun dan tidak akan tertangkap observer
+- [x] Tampilan hasil assessment untuk tenaga kesehatan + catatan edukasi — `HealthWorkerAccessController` (tukar kode, daftar pasien, detail pasien, rincian satu hasil, tulis catatan) + migrasi `health_worker_notes`
+
+**Dua tabel di luar skema PRD.** §10 tidak memuat DDL untuk F-15 (fiturnya ditulis sebagai satu paragraf), jadi bentuk tabelnya diturunkan dari kalimat fiturnya: "consent eksplisit, dapat dicabut" → `revoked_at`, "akses berbasis kode tautan" → `access_code_hash`. Ditambah `expires_at` (kedaluwarsa opsional) dan `last_accessed_at` (supaya pemberi izin melihat kapan datanya terakhir dibuka).
+
+**Kode tautan bukan kredensial pembawa (bearer).** Ini keputusan paling menentukan di fitur ini. Selain kode yang benar, pembukaan menuntut dua hal lain: peran `health_worker` (middleware rute) dan izin yang memang menunjuk akun itu (`guardConsent`). Konsekuensinya tautan yang diteruskan ke grup WhatsApp tidak membuka apa pun bagi penerimanya — padahal justru begitulah tautan berpindah tangan di dunia nyata. Ini juga yang membuat "terverifikasi" pada PRD §9 F-15 punya arti: verifikasinya adalah peran yang dinaikkan super admin lewat `/admin/pengguna`.
+
+**Pencabutan berlaku seketika, dan itu ditegakkan oleh bentuk datanya.** `HealthWorkerConsent::isActive()` satu-satunya sumber kebenaran, dicek ulang di **tiap** permintaan tenaga kesehatan — bukan sekali saat kode ditukar lalu dipercaya sesudahnya. Tidak ada sesi atau token turunan yang bisa hidup lebih lama dari izinnya (BUSINESS_FLOWS §9: "bukan menunggu kode tautan kedaluwarsa").
+
+**Kegagalan tidak dibedakan.** Kode salah, izin dicabut, izin kedaluwarsa, dan izin milik tenaga kesehatan lain semuanya menjawab 404 dengan pesan yang sama persis. Membedakannya akan memberi tahu penebak kode bahwa tebakannya mengenai izin yang benar-benar ada. `POST /health-worker/access` juga di-throttle 10/menit karena itulah satu-satunya endpoint yang menerima tebakan kode.
+
+**Cakupan izin ditentukan satu tempat.** `HealthWorkerPatientService` menyusun apa yang boleh dilihat: nama pemberi izin, usia kehamilan, hasil cek risiko, catatan edukasi. Yang **tidak** ikut meski ada di `pregnancies`: berat badan, golongan darah, riwayat penyakit, nama & kontak fasilitas, serta email dan telepon pemberi izin. Usia kehamilan ikut karena skor risiko nyaris tidak bisa dibaca tanpanya; sisanya tidak dibutuhkan untuk membaca hasil (minimalisasi data, §12.3). Menambah kartu di frontend tidak akan memunculkan data baru tanpa keputusan sadar di sisi ini.
+
+**Kode hanya bisa dilihat sekali.** Karena yang tersimpan hanya hash-nya, tidak ada endpoint yang bisa menampilkan ulang tautan yang hilang — pengguna membuat kode baru, dan kode lama langsung mati (satu hash per izin). Ini konsekuensi yang disengaja dari mengikuti pola `refresh_tokens`, bukan kekurangan yang terlewat.
+
+**Pencarian penerima memakai email persis**, bukan pencocokan sebagian seperti tabel pengguna di panel admin. Pencocokan sebagian akan mengubah endpoint itu jadi direktori tenaga kesehatan yang bisa disisir siapa pun yang punya akun; dengan email persis, pemanggil harus sudah tahu siapa yang dicarinya — dan memang begitu alurnya, bidan memberi emailnya kepada pasien.
+
+**Satu izin aktif per pasangan**, dijaga indeks unik parsial `(user_id, health_worker_id) WHERE revoked_at IS NULL` (SQL mentah karena Schema builder tidak punya API `where` untuk indeks; sintaksnya berlaku di PostgreSQL maupun SQLite pengujian). Indeks unik penuh akan salah menolak izin baru setelah yang lama dicabut, padahal riwayatnya sengaja disimpan.
+
+`revoked_at` tidak masuk `$fillable` — pencabutan lewat `HealthWorkerConsent::revoke()` — supaya tidak ada payload permintaan yang bisa menghidupkan kembali izin dengan mengirim `revoked_at: null`. `access_code_hash` dan `last_accessed_at` masuk `auditIgnore()`: yang pertama kredensial (audit log dibaca super admin), yang kedua berubah tiap pembacaan dan akan melahirkan baris `updated` kembar di samping baris `accessed`.
+
+Diuji lewat 18 test baru (`Feature/HealthWorkerConsentTest` — 9 test: kode hanya dikembalikan sekali & tersimpan sebagai hash, pemberian tercatat di audit tanpa membocorkan hash, penerima wajib `health_worker` aktif, izin aktif kedua ditolak tapi boleh setelah dicabut, kode lama mati setelah dibuat ulang, pencabutan langsung menutup akses, izin milik orang lain 404, pencarian email persis, izin kedaluwarsa berhenti bekerja tanpa dicabut; `Feature/HealthWorkerAccessTest` — 9 test: kode membuka hasil beserta usia kehamilan tapi tanpa data kehamilan lain, tautan bocor tak berguna bagi akun lain/pengguna biasa/admin, kode tak dikenal tak terbedakan dari yang dicabut, pembacaan tercatat sebagai `accessed` tanpa baris `updated` kembar, izin sah tidak membuka hasil pasien lain, catatan edukasi terbaca pemiliknya, catatan tidak bisa ditempelkan ke hasil orang lain, catatan bertahan setelah pencabutan, daftar pasien hanya berisi izin aktif) — total suite backend 330 test lulus, Pint bersih.
+
+**Frontend**
+- [x] `/dashboard/privasi` — daftar izin (aktif & riwayat yang sudah dicabut), dialog beri izin dua langkah (cari email → konfirmasi nama), dialog tautan sekali-tampil, buat ulang tautan, cabut izin dengan konfirmasi, dan pembacaan catatan edukasi
+- [x] `/nakes` — beranda tenaga kesehatan: kolom tempel kode tautan + daftar pasien dengan izin aktif
+- [x] `/nakes/akses/[code]` — titik pendaratan tautan; menukar kode lalu `router.replace` ke halaman pasien
+- [x] `/nakes/pasien/[consentId]` — konteks kehamilan, riwayat cek risiko dengan rincian faktor penyumbang skor, dan form catatan edukasi
+
+`landingPathForRole()` kini mengarahkan peran `health_worker` ke `/nakes`; guard `app/nakes/layout.tsx` mengembalikan peran lain ke "rumah"-nya masing-masing alih-alih menampilkan halaman galat — pengguna yang mengklik tautan akses milik orang lain sedang tersesat, bukan menyerang. Area `/dashboard` sengaja tetap terbuka untuk `health_worker`: seorang bidan bisa saja juga sedang hamil.
+
+**Konfirmasi dua langkah, bukan satu form.** Pengguna mencari lewat email lalu mengonfirmasi nama yang muncul. Konfirmasi itu bagian dari "consent eksplisit" — memberi izin kepada id yang tak pernah dilihat namanya bukan persetujuan yang berarti. Dialognya juga menyebut apa yang **tidak** ikut terlihat, karena itu yang menentukan apakah persetujuannya diberikan dengan informasi utuh.
+
+**Rincian tiap hasil diambil per baris saat dibuka**, bukan sekaligus bersama daftar: hanya pembukaan rincian yang tercatat sebagai akses ke satu hasil tertentu, jadi memuatnya di muka akan menulis jejak audit untuk hasil yang tidak pernah dilihat.
+
+Tautan dari halaman hasil cek risiko (F-05) ke `/dashboard/privasi` ditambahkan tepat di bawah tombol "Bagikan ke Bidan": tombol itu hanya mengirim ringkasan lewat WhatsApp, sedangkan bidan yang perlu melihat rincian dan membalas dengan catatan butuh jalur F-15 — dan itu tidak akan ditemukan pengguna kecuali disebut di titik kebutuhannya muncul. Pintasan "Privasi" juga ada di header dashboard, bukan sebagai kartu di beranda, karena pengguna mencarinya saat ingin **mencabut** izin — momen yang tidak boleh menuntut menelusuri halaman lebih dulu.
+
+Diverifikasi lewat sesi browser sungguhan (Chrome DevTools automation) end-to-end melawan PostgreSQL: pasien memberi izin → tautan tampil sekali dengan peringatannya → buat ulang tautan menghasilkan kode berbeda → login sebagai bidan mendarat langsung di `/nakes` → membuka tautan meneruskan ke halaman pasien berisi usia kehamilan 19 minggu 6 hari, hasil "Risiko Tinggi" skor 10 bertanda bahaya, rincian faktor penyumbang skor, dan rekomendasi → tombol "Tulis catatan" memilih hasil itu di form → catatan terkirim dan langsung terbaca pasien → pasien mencabut izin → halaman pasien yang sama seketika berubah jadi penolakan, tautan lama ikut mati, dan catatan edukasi tetap terbaca pemiliknya. Baris `audit_logs` diperiksa langsung di basis data: `created` (izin), `accessed` (`via: redeem` dan `via: assessment` beserta id hasilnya), `created` (catatan) — tanpa `access_code_hash` di kolom `changes` mana pun. Data uji (2 akun, izin, catatan, kehamilan, hasil cek risiko, baris audit) dibersihkan setelahnya.
+
+**Yang belum dikerjakan.** Tidak ada notifikasi ke tenaga kesehatan saat izin diberikan — tautan masih dibagikan pasien secara manual (lewat WhatsApp, sesuai kebiasaan persona §4). Catatan edukasi juga belum bisa disunting atau dihapus penulisnya: catatan yang sudah dibaca pasien tidak boleh berubah diam-diam di belakangnya, dan koreksi dilakukan dengan menulis catatan baru.
 
 ---
 

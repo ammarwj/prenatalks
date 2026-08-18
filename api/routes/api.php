@@ -18,10 +18,12 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CalculatorController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ChecklistController;
+use App\Http\Controllers\Api\V1\ConsentController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\HealthWorkerAccessController;
 use App\Http\Controllers\Api\V1\PregnancyController;
 use App\Http\Controllers\Api\V1\QuestionnaireController;
 use App\Http\Controllers\Api\V1\SettingController;
@@ -73,6 +75,29 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/checklist/custom/{progress}', [ChecklistController::class, 'updateCustom']);
     Route::delete('/checklist/custom/{progress}', [ChecklistController::class, 'destroyCustom']);
     Route::patch('/checklist/{item}', [ChecklistController::class, 'update']);
+
+    // F-15 · akses tenaga kesehatan. Rute "health-workers" didaftarkan
+    // sebelum {consent} dengan alasan yang sama seperti "custom" di atas:
+    // segmen tetap itu akan diikat sebagai id izin bila urutannya terbalik.
+    Route::get('/consents/health-workers', [ConsentController::class, 'healthWorkers'])
+        ->middleware('throttle:20,1');
+    Route::get('/consents', [ConsentController::class, 'index']);
+    Route::post('/consents', [ConsentController::class, 'store']);
+    Route::get('/consents/{consent}/notes', [ConsentController::class, 'notes']);
+    Route::post('/consents/{consent}/regenerate', [ConsentController::class, 'regenerate']);
+    Route::delete('/consents/{consent}', [ConsentController::class, 'destroy']);
+
+    Route::middleware('role:health_worker')->prefix('health-worker')->group(function () {
+        // Throttle ketat: inilah satu-satunya endpoint yang menerima kode
+        // tautan sebagai tebakan, jadi di sinilah brute force dihentikan.
+        Route::post('/access', [HealthWorkerAccessController::class, 'redeem'])
+            ->middleware('throttle:10,1');
+
+        Route::get('/patients', [HealthWorkerAccessController::class, 'patients']);
+        Route::get('/patients/{consent}', [HealthWorkerAccessController::class, 'show']);
+        Route::get('/patients/{consent}/assessments/{assessment}', [HealthWorkerAccessController::class, 'assessment']);
+        Route::post('/patients/{consent}/notes', [HealthWorkerAccessController::class, 'storeNote']);
+    });
 
     Route::middleware('role:super_admin')->prefix('admin')->group(function () {
         Route::apiResource('questionnaires', AdminQuestionnaireController::class);

@@ -159,6 +159,19 @@ export default function HasilCekRisikoPage() {
               Bagikan ke Bidan
             </Button>
           </div>
+
+          {/* "Bagikan ke Bidan" di atas hanya mengirim ringkasan lewat
+              WhatsApp (F-05). Untuk bidan yang perlu melihat hasil lengkap
+              beserta faktor penyumbang skor dan membalas dengan catatan,
+              jalurnya izin akses F-15 — dan itu tidak akan ditemukan
+              pengguna kecuali disebut di sini, tepat saat kebutuhannya muncul. */}
+          <p className="text-xs text-muted-foreground">
+            Ingin bidan Anda melihat hasil lengkap ini dan menuliskan catatan?{" "}
+            <Link href="/dashboard/privasi" className="font-semibold text-primary-text underline">
+              Beri izin akses
+            </Link>{" "}
+            — dapat Anda cabut kapan saja.
+          </p>
         </CardContent>
       </Card>
 

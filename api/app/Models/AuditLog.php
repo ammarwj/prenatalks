@@ -33,6 +33,8 @@ class AuditLog extends Model
         'Setting' => 'Pengaturan',
         'TeamMember' => 'Profil Tim',
         'User' => 'Pengguna',
+        'HealthWorkerConsent' => 'Izin Tenaga Kesehatan',
+        'HealthWorkerNote' => 'Catatan Tenaga Kesehatan',
     ];
 
     /** @var array<string, string> */
@@ -40,6 +42,11 @@ class AuditLog extends Model
         'created' => 'Dibuat',
         'updated' => 'Diubah',
         'deleted' => 'Dihapus',
+
+        // Hanya dipakai F-15: pembacaan data oleh pemegang izin. Tidak ada
+        // model lain yang mencatat aksi baca — di sini wajib karena yang
+        // diaudit justru siapa melihat data kesehatan siapa (PRD §9 F-15).
+        'accessed' => 'Diakses',
     ];
 
     protected function casts(): array

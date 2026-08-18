@@ -585,3 +585,67 @@ export type AdminTeamMember = TeamMember & {
   created_at: string;
   updated_at: string;
 };
+
+/**
+ * PRD §9 F-15 — izin akses tenaga kesehatan.
+ *
+ * `access_code` hanya ada di respons pemberian & pembuatan ulang izin;
+ * setelah itu backend cuma menyimpan hash-nya, jadi tidak ada bentuk
+ * `Consent` yang membawanya.
+ */
+export type Consent = {
+  id: number;
+  health_worker: { id: number; name: string | null; email: string | null };
+  is_active: boolean;
+  expires_at: string | null;
+  revoked_at: string | null;
+  last_accessed_at: string | null;
+  notes_count?: number;
+  created_at: string;
+};
+
+export type ConsentIssued = {
+  consent: Consent;
+  access_code: string;
+  access_link: string;
+};
+
+export type HealthWorkerDirectoryEntry = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+export type HealthWorkerNote = {
+  id: number;
+  body: string;
+  risk_assessment_id: number | null;
+  health_worker_name: string | null;
+  created_at: string;
+};
+
+/** Sisi tenaga kesehatan — satu baris di daftar pasien. */
+export type HealthWorkerPatient = {
+  consent_id: number;
+  patient_name: string | null;
+  is_active: boolean;
+  expires_at: string | null;
+  granted_at: string;
+  last_accessed_at: string | null;
+};
+
+/**
+ * Cakupan yang dibuka izin ini, tidak lebih: konteks usia kehamilan, hasil
+ * cek risiko, dan catatan edukasi. Lihat HealthWorkerPatientService di
+ * backend untuk alasan tiap kolom yang sengaja tidak ada di sini.
+ */
+export type HealthWorkerPatientDetail = HealthWorkerPatient & {
+  pregnancy: {
+    gestational_age: { weeks: number; days: number; text: string };
+    trimester: 1 | 2 | 3;
+    edd_date: string;
+    days_remaining: number;
+  } | null;
+  assessments: RiskAssessmentSummary[];
+  notes: HealthWorkerNote[];
+};

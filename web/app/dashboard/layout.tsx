@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home, Loader2, LogOut, MailWarning } from "lucide-react";
+import { Home, Loader2, LogOut, MailWarning, ShieldCheck } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -75,6 +75,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link href="/dashboard">
                 <Home className="size-4" />
                 Dashboard
+              </Link>
+            </Button>
+            {/* Pengaturan privasi (F-15) tinggal di header, bukan sebagai
+                kartu di beranda dashboard: pengguna mencarinya saat ingin
+                mencabut izin — momen yang tidak boleh menuntut menelusuri
+                halaman lebih dulu. */}
+            <Button asChild type="button" variant="ghost" size="sm" className="gap-1.5">
+              <Link href="/dashboard/privasi">
+                <ShieldCheck className="size-4" />
+                <span className="hidden sm:inline">Privasi</span>
               </Link>
             </Button>
             {user && (
