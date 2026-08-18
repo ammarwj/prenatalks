@@ -152,6 +152,8 @@ NEXT_PUBLIC_SITE_URL=https://prenatalks.id
 AUTH_COOKIE_NAME=pt_refresh
 ```
 
+> **Jangan pakai `$` di dalam nilai `.env` ini.** Compose menginterpolasi `$VAR` di berkasnya sendiri, jadi `DB_PASSWORD=pa$zT8w0rd` akan berubah diam-diam menjadi `pa` + string kosong + `w0rd`, dengan peringatan `WARN The "zT8" variable is not set. Defaulting to a blank string.` Akibatnya Postgres dibuat dengan password yang berbeda dari yang dibaca Laravel, dan koneksi selalu ditolak. Kalau tetap butuh `$`, tulis dobel (`pa$$zT8w0rd`) — Compose menerjemahkannya jadi satu `$`. `scripts/install.sh` membuat password tanpa `$` untuk alasan ini.
+
 > `NEXT_PUBLIC_*` masuk sebagai **build arg** dan di-inline ke bundle Next.js. Mengubahnya berarti `docker compose build web` ulang — restart container tidak cukup. Nilai `NEXT_PUBLIC_API_URL` juga yang menentukan `images.remotePatterns` di `web/next.config.ts`; salah isi = semua gambar dari API ditolak `next/image`.
 
 ### 3.2 `api/.env` untuk Laravel
@@ -226,7 +228,10 @@ Tiga hal yang paling sering salah, dan semuanya gagal **tanpa pesan error**:
 
 ```bash
 chmod 640 api/.env
+sudo chown 1000:1000 api/.env
 ```
+
+`chown 1000:1000` **bukan hiasan.** Container PHP jalan sebagai user `laravel` (uid 1000), bukan root. Kalau `api/.env` milik `root` dengan mode `640`, uid 1000 tidak bisa membacanya, dan Laravel jalan tanpa env sama sekali — gejalanya sama persis dengan `.env` yang tidak ada. Sejak entrypoint diperketat, container berhenti dengan `FATAL: ... tidak bisa dibaca oleh user laravel (uid 1000)` daripada menyala dengan konfigurasi kosong.
 
 ---
 
@@ -661,6 +666,8 @@ Tiga hal yang wajib diingat di jalur Docker ini:
 | Tautan verifikasi selalu "tidak valid" | `X-Forwarded-Proto` tidak diteruskan Nginx host, atau `APP_URL` salah | Cek `proxy_set_header X-Forwarded-Proto $scheme;` ada di vhost API; `APP_URL=https://api.prenatalks.id` |
 | Tautan email mengarah ke `localhost:3000` | `FRONTEND_URL` belum diubah | Perbaiki `api/.env` → `up -d --force-recreate app queue` |
 | Perubahan `api/.env` tidak berpengaruh | Config ter-cache saat container start | Buat ulang container (`--force-recreate`), bukan sekadar `restart` |
+| Container `app` restart terus, log: `FATAL: ... tidak bisa dibaca oleh user laravel (uid 1000)` (atau `grep: /var/www/html/.env: Permission denied`) | `api/.env` milik root, container jalan sebagai uid 1000 | `sudo chown 1000:1000 api/.env && sudo chmod 640 api/.env`, lalu `up -d --force-recreate` |
+| `WARN The "xxx" variable is not set. Defaulting to a blank string.` saat perintah compose | Ada `$` telanjang di nilai `/opt/prenatalks/.env` — Compose menginterpolasinya | Tulis `$$` untuk setiap `$`, atau pakai nilai tanpa `$`. Kalau password DB terlanjur salah: `down -v` (kalau data masih kosong) lalu pasang ulang, atau `ALTER USER` di `psql` agar cocok dengan `api/.env` |
 | `/api/v1/health` menjawab `{"app":"Laravel","database":"unavailable"}` | `.env` tidak terbaca di dalam container — hampir selalu karena `api/.env` belum ada saat `up` pertama, sehingga Docker membuatkan **direktori** kosong di jalur itu | Lihat kotak di bawah tabel |
 | Perubahan `NEXT_PUBLIC_*` tidak berpengaruh | Di-inline saat build image | `docker compose -f docker-compose.prod.yml build web && up -d web` |
 | Gambar cover 404 setelah deploy | Volume `api_storage` terlepas/terhapus | `docker volume ls \| grep prenatalks-prod`; pulihkan dari backup `storage-*.tar.gz` |

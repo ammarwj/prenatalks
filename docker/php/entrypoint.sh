@@ -23,6 +23,17 @@ if [ ! -f "$APP_ENV_FILE" ]; then
     exit 1
 fi
 
+# Container jalan sebagai user 'laravel' (uid 1000). Kalau .env di host milik
+# root dengan mode 640, uid 1000 tidak bisa membacanya — Laravel akan diam-diam
+# jalan tanpa env, persis seperti kasus .env-tidak-ada di atas.
+if [ ! -r "$APP_ENV_FILE" ]; then
+    echo "FATAL: $APP_ENV_FILE ada tapi tidak bisa dibaca oleh user $(id -un) (uid $(id -u))." >&2
+    echo "       Perbaiki kepemilikannya di host:" >&2
+    echo "         sudo chown 1000:1000 api/.env && sudo chmod 640 api/.env" >&2
+    echo "         docker compose -f docker-compose.prod.yml up -d --force-recreate" >&2
+    exit 1
+fi
+
 if ! grep -q '^APP_KEY=base64:' "$APP_ENV_FILE"; then
     echo "FATAL: APP_KEY di .env kosong/tidak valid. Isi dengan hasil 'php artisan key:generate --show'." >&2
     exit 1

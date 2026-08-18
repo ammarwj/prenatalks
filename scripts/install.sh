@@ -133,7 +133,15 @@ confirm() {  # confirm <pertanyaan> → 0 kalau ya
     [[ "$a" =~ ^[Yy] ]]
 }
 
+# Sengaja tanpa karakter non-alfanumerik: berkas .env dibaca Docker Compose,
+# yang menginterpolasi $VAR di dalam nilainya. Password ber-'$' berubah diam-diam
+# (WARN "The ... variable is not set. Defaulting to a blank string") sehingga
+# Postgres dan Laravel memakai password yang berbeda.
 rand_pass() { openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 20; }
+
+# '$' harus ditulis '$$' di berkas .env milik Compose supaya sampai utuh.
+esc_compose() { printf '%s' "${1//\$/\$\$}"; }
+unesc_compose() { printf '%s' "${1//\$\$/\$}"; }
 
 set_env() {  # set_env <KEY> <VALUE> <FILE>
     local k="$1" v="$2" f="$3"
@@ -256,7 +264,7 @@ if [ "$write_compose_env" = "1" ]; then
 
 DB_DATABASE=$DB_DATABASE
 DB_USERNAME=$DB_USERNAME
-DB_PASSWORD=$DB_PASSWORD
+DB_PASSWORD=$(esc_compose "$DB_PASSWORD")
 
 WEB_PORT=$WEB_PORT
 API_PORT=$API_PORT
@@ -274,6 +282,15 @@ fi
 
 # langkah berikutnya harus memakai nilai dari berkas yang benar-benar dipakai
 DB_PASSWORD="$(grep '^DB_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)"
+case "$DB_PASSWORD" in
+    *'$$'*) DB_PASSWORD="$(unesc_compose "$DB_PASSWORD")" ;;
+    *'$'*)
+        warn "DB_PASSWORD di $ENV_FILE memuat '\$' yang tidak di-escape."
+        warn "Compose akan menginterpolasinya ('The ... variable is not set') dan password jadi berbeda dengan yang dipakai Laravel."
+        info "Perbaiki: tulis setiap \$ menjadi \$\$ di $ENV_FILE, atau pakai password tanpa \$."
+        confirm "Tetap lanjut?" || die "Dibatalkan."
+        ;;
+esac
 DB_USERNAME="$(grep '^DB_USERNAME=' "$ENV_FILE" | cut -d= -f2-)"
 DB_DATABASE="$(grep '^DB_DATABASE=' "$ENV_FILE" | cut -d= -f2-)"
 API_PORT="$(grep '^API_PORT=' "$ENV_FILE" | cut -d= -f2-)"
@@ -323,8 +340,17 @@ if [ "$write_api_env" = "1" ]; then
         warn "SMTP belum diisi — MAIL_MAILER dibiarkan 'log'. Email verifikasi & reset password TIDAK akan sampai ke pengguna sampai diisi."
     fi
 
-    chmod 640 "$API_ENV_FILE"
     ok "$API_ENV_FILE (APP_KEY & JWT_SECRET dibuat acak)"
+fi
+
+# Berlaku untuk berkas yang baru ditulis MAUPUN yang dipertahankan: container
+# jalan sebagai uid 1000, jadi .env milik root bermode 640 tidak akan terbaca
+# dan Laravel diam-diam jalan tanpa env.
+chmod 640 "$API_ENV_FILE"
+if chown 1000:1000 "$API_ENV_FILE" 2>/dev/null || $SUDO chown 1000:1000 "$API_ENV_FILE" 2>/dev/null; then
+    ok "$API_ENV_FILE dimiliki uid 1000 (user 'laravel' di dalam container), mode 640"
+else
+    warn "gagal chown $API_ENV_FILE ke uid 1000 — container mungkin tidak bisa membacanya."
 fi
 
 # ============================================================== 4. build API ==
