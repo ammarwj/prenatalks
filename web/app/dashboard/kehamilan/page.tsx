@@ -1,16 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { Calculator, CheckSquare, Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { PregnancyForm } from "@/components/dashboard/pregnancy-form";
 import { PregnancyHistoryList } from "@/components/dashboard/pregnancy-history-list";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
+import { useDashboardStore } from "@/lib/stores/dashboard-store";
 import type { Pregnancy } from "@/lib/types";
 
 export default function DataKehamilanPage() {
+  const refreshOverview = useDashboardStore((state) => state.refresh);
   const [pregnancies, setPregnancies] = useState<Pregnancy[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -39,42 +40,19 @@ export default function DataKehamilanPage() {
       const others = (prev ?? []).filter((p) => p.id !== saved.id);
       return [saved, ...others];
     });
+
+    // HPHT berubah artinya usia kehamilan berubah — chip di kerangka
+    // navigasi ikut disegarkan supaya tidak memajang angka yang sudah basi.
+    refreshOverview();
   }
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-foreground">
-            Data Kehamilan
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Lengkapi data ini agar kalkulator dan cek risiko lebih akurat untuk Anda.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/dashboard/kalkulator"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-          >
-            <Calculator className="size-4" />
-            Buka Kalkulator
-          </Link>
-          <Link
-            href="/dashboard/cek-risiko"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-          >
-            <ShieldCheck className="size-4" />
-            Cek Risiko
-          </Link>
-          <Link
-            href="/dashboard/persiapan"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-          >
-            <CheckSquare className="size-4" />
-            Persiapan Melahirkan
-          </Link>
-        </div>
+      <div>
+        <h1 className="font-display text-2xl font-extrabold text-foreground">Data Kehamilan</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Lengkapi data ini agar kalkulator dan cek risiko lebih akurat untuk Anda.
+        </p>
       </div>
 
       {loadError && (

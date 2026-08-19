@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { History, Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 import { RiskDisclaimer } from "@/components/shared/risk-disclaimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -63,23 +62,14 @@ export default function CekRisikoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-foreground">
-            Cek Risiko Kehamilan
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Kuesioner singkat berbasis skor untuk membantu Anda mengenali kondisi yang perlu
-            diwaspadai selama kehamilan.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/cek-risiko/riwayat"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-        >
-          <History className="size-4" />
-          Riwayat Cek Risiko
-        </Link>
+      <div>
+        <h1 className="font-display text-2xl font-extrabold text-foreground">
+          Cek Risiko Kehamilan
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Kuesioner singkat berbasis skor untuk membantu Anda mengenali kondisi yang perlu
+          diwaspadai selama kehamilan.
+        </p>
       </div>
 
       <RiskDisclaimer />

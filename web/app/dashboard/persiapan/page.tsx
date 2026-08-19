@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ChecklistCustomForm } from "@/components/dashboard/checklist-custom-form";
@@ -113,23 +112,14 @@ export default function PersiapanPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-foreground">
-            Persiapan Melahirkan
-          </h1>
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Yuk, siapkan bersama-sama. Centang setiap hal yang sudah Anda siapkan — progresnya
-            tersimpan otomatis dan bisa Anda lanjutkan kapan saja.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/cek-risiko"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-soft hover:bg-muted"
-        >
-          <ShieldCheck className="size-4" />
-          Cek Risiko
-        </Link>
+      <div>
+        <h1 className="font-display text-2xl font-extrabold text-foreground">
+          Persiapan Melahirkan
+        </h1>
+        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+          Yuk, siapkan bersama-sama. Centang setiap hal yang sudah Anda siapkan — progresnya
+          tersimpan otomatis dan bisa Anda lanjutkan kapan saja.
+        </p>
       </div>
 
       {loadError && (

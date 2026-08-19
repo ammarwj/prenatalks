@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\RefreshTokenService;
@@ -118,6 +120,45 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return $this->success(['user' => new UserResource($request->user('api'))], 'Profil pengguna');
+    }
+
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        /** @var User $user */
+        $user = $request->user('api');
+
+        $user->fill($request->validated())->save();
+
+        return $this->success(['user' => new UserResource($user->refresh())], 'Profil berhasil diperbarui');
+    }
+
+    /**
+     * Ganti kata sandi dari dalam sesi yang aktif.
+     *
+     * Semua refresh token pengguna dicabut, lalu sepasang token baru
+     * diterbitkan untuk perangkat yang sedang dipakai. Tanpa pencabutan itu
+     * penggantian kata sandi tidak mengamankan apa pun — sesi yang terlanjur
+     * dicuri tetap hidup sampai TTL-nya habis. Penerbitan ulang di langkah
+     * terakhir yang membuat perangkat ini tidak ikut terlempar keluar.
+     */
+    public function changePassword(ChangePasswordRequest $request)
+    {
+        $data = $request->validated();
+
+        /** @var User $user */
+        $user = $request->user('api');
+
+        if (! Hash::check($data['current_password'], $user->password_hash)) {
+            // Pesannya sengaja hanya menyebut kata sandi saat ini — tidak ada
+            // yang perlu dibocorkan selain itu kepada pemegang sesi curian.
+            return $this->error('Kata sandi saat ini salah', ['current_password' => ['Kata sandi saat ini salah']], 422);
+        }
+
+        $user->forceFill(['password_hash' => $data['password']])->save();
+
+        $this->refreshTokens->revokeAllFor($user);
+
+        return $this->success($this->tokenPayload($user, $request), 'Kata sandi berhasil diperbarui');
     }
 
     public function forgotPassword(ForgotPasswordRequest $request)

@@ -6,12 +6,19 @@ type SessionResponse = {
   user: User;
 };
 
-async function callAuthRoute<T>(path: string, body?: unknown): Promise<T> {
+async function callAuthRoute<T>(
+  path: string,
+  body?: unknown,
+  accessToken?: string | null
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
@@ -37,6 +44,17 @@ export const authLogin = (email: string, password: string) =>
 
 /** Dipanggil oleh interceptor di api-client.ts saat access_token kedaluwarsa (401). */
 export const authRefresh = () => callAuthRoute<SessionResponse>("/api/auth/refresh");
+
+/**
+ * Ganti kata sandi dari dalam sesi. Lewat Route Handler, bukan `apiPost`:
+ * backend mencabut seluruh refresh token pengguna lalu menerbitkan yang baru,
+ * dan cookie httpOnly-nya hanya bisa ditulis di server. Sesi baru yang
+ * dikembalikan harus dipasang pemanggil lewat `setSession()`.
+ */
+export const authChangePassword = (
+  accessToken: string | null,
+  input: { current_password: string; password: string; password_confirmation: string }
+) => callAuthRoute<SessionResponse>("/api/auth/change-password", input, accessToken);
 
 export async function authLogout(accessToken: string | null): Promise<void> {
   try {

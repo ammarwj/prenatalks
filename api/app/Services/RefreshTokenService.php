@@ -45,4 +45,19 @@ class RefreshTokenService
     {
         $refreshToken->update(['revoked_at' => now()]);
     }
+
+    /**
+     * Cabut seluruh refresh token milik satu pengguna — dipakai saat ganti
+     * kata sandi. Tanpa ini penggantian tidak mengamankan apa pun: sesi yang
+     * terlanjur dicuri tetap bisa menukar refresh token-nya jadi access token
+     * baru sampai TTL-nya habis.
+     *
+     * @return int jumlah token yang dicabut
+     */
+    public function revokeAllFor(User $user): int
+    {
+        return $user->refreshTokens()
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now()]);
+    }
 }

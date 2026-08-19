@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home, Loader2, LogOut, MailWarning, ShieldCheck } from "lucide-react";
+import { Loader2, MailWarning } from "lucide-react";
 
+import { DashboardBottomNav } from "@/components/dashboard/dashboard-bottom-nav";
+import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { GestationalChip } from "@/components/dashboard/gestational-chip";
 import { Logo } from "@/components/shared/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { authLogout } from "@/lib/auth";
 import { isAdminRole } from "@/lib/auth-routes";
 import { useSessionRehydrate } from "@/lib/hooks/use-session-rehydrate";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useDashboardStore } from "@/lib/stores/dashboard-store";
 
 /**
  * Guard `/dashboard/*` — arahkan ke /masuk bila tidak ada sesi (PRD F-02),
@@ -28,6 +30,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const accessToken = useAuthStore((state) => state.accessToken);
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
+  const loadOverview = useDashboardStore((state) => state.load);
+  const clearOverview = useDashboardStore((state) => state.clear);
 
   const isManager = isAdminRole(user?.role);
 
@@ -44,9 +48,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [isHydrating, accessToken, isManager, router]);
 
+  /**
+   * Ringkasan dimuat sekali di sini, bukan di tiap halaman: chip usia
+   * kehamilan di kerangka navigasi membutuhkannya di mana-mana, dan beranda
+   * membaca dari cache yang sama alih-alih menembak `/dashboard` lagi.
+   */
+  useEffect(() => {
+    if (!isHydrating && accessToken && !isManager) {
+      loadOverview();
+    }
+  }, [isHydrating, accessToken, isManager, loadOverview]);
+
   async function handleLogout() {
     await authLogout(accessToken);
     clearSession();
+    clearOverview();
     router.replace("/masuk");
   }
 
@@ -66,60 +82,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
-          <Logo withTagline={false} href="/dashboard" />
-          <div className="flex items-center gap-4">
-            <Button asChild type="button" variant="ghost" size="sm" className="gap-1.5">
-              <Link href="/dashboard">
-                <Home className="size-4" />
-                Dashboard
-              </Link>
-            </Button>
-            {/* Pengaturan privasi (F-15) tinggal di header, bukan sebagai
-                kartu di beranda dashboard: pengguna mencarinya saat ingin
-                mencabut izin — momen yang tidak boleh menuntut menelusuri
-                halaman lebih dulu. */}
-            <Button asChild type="button" variant="ghost" size="sm" className="gap-1.5">
-              <Link href="/dashboard/privasi">
-                <ShieldCheck className="size-4" />
-                <span className="hidden sm:inline">Privasi</span>
-              </Link>
-            </Button>
-            {user && (
-              <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
-                {user.name}
-              </span>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="gap-1.5"
-            >
-              <LogOut className="size-4" />
-              Keluar
-            </Button>
+    <div className="min-h-screen bg-muted/40 lg:flex">
+      <aside className="sticky top-0 hidden h-svh w-64 shrink-0 border-r border-border lg:block">
+        <DashboardSidebar onLogout={handleLogout} />
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Header sempit tidak lagi memuat tombol navigasi apa pun — semuanya
+            turun ke bilah bawah yang terjangkau ibu jari. Yang tersisa cuma
+            identitas dan usia kehamilan. */}
+        <header className="sticky top-0 z-40 border-b border-border bg-white lg:hidden">
+          <div className="flex h-14 items-center justify-between gap-3 px-4">
+            <Logo withTagline={false} href="/dashboard" />
+            <GestationalChip variant="inline" />
           </div>
-        </div>
-      </header>
+        </header>
 
-      {user && !user.email_verified_at && (
-        <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6">
-          <Alert className="rounded-xl border-warning/30 bg-feature-amber-soft">
-            <MailWarning className="size-4 text-warning" />
-            <AlertDescription className="text-warning">
-              Email Anda belum terverifikasi. Cek tautan verifikasi yang kami kirim ke{" "}
-              <strong>{user.email}</strong> — hasil cek risiko belum bisa disimpan sebelum email
-              diverifikasi.
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
+        {/* pb-28 memberi ruang untuk bilah bawah yang `fixed`; tanpa itu
+            konten terakhir setiap halaman tertutup olehnya. */}
+        <main className="mx-auto w-full max-w-5xl px-4 py-8 pb-28 sm:px-6 lg:pb-8">
+          {user && !user.email_verified_at && (
+            <Alert className="mb-6 rounded-xl border-warning/30 bg-feature-amber-soft">
+              <MailWarning className="size-4 text-warning" />
+              <AlertDescription className="text-warning">
+                Email Anda belum terverifikasi. Cek tautan verifikasi yang kami kirim ke{" "}
+                <strong>{user.email}</strong> — hasil cek risiko belum bisa disimpan sebelum email
+                diverifikasi.
+              </AlertDescription>
+            </Alert>
+          )}
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">{children}</main>
+          {children}
+        </main>
+      </div>
+
+      <DashboardBottomNav onLogout={handleLogout} />
     </div>
   );
 }
