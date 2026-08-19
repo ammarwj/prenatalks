@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, ShieldAlert } from "lucide-react";
+import { Check, Copy, MailCheck, ShieldAlert } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,9 @@ import type { ConsentIssued } from "@/lib/types";
  *
  * Dialog ini muncul tepat sekali per kode: backend hanya menyimpan hash
  * kodenya, jadi begitu dialog ditutup tautan itu tidak bisa ditampilkan
- * ulang oleh endpoint mana pun. Kalimat peringatannya bukan basa-basi —
- * satu-satunya jalan memulihkan tautan yang hilang adalah membuat kode baru.
+ * ulang oleh endpoint mana pun. Kehilangan salinan di layar ini tidak lagi
+ * fatal — tautan yang sama dikirim ke email penerima — tapi memulihkannya
+ * untuk pemberi izin sendiri tetap berarti membuat kode baru.
  */
 export function ConsentLinkDialog({
   issued,
@@ -66,11 +67,19 @@ export function ConsentLinkDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <Alert className="rounded-xl border-feature-blue/30 bg-feature-blue-soft">
+          <MailCheck className="size-4 text-feature-blue" />
+          <AlertDescription className="text-feature-blue">
+            Tautan ini juga kami kirim ke email {issued?.consent.health_worker.email}, jadi Anda
+            tidak harus membagikannya sendiri.
+          </AlertDescription>
+        </Alert>
+
         <Alert className="rounded-xl border-warning/30 bg-feature-amber-soft">
           <ShieldAlert className="size-4 text-warning" />
           <AlertDescription className="text-warning">
-            Tautan ini hanya ditampilkan sekarang. Simpan atau kirimkan dulu sebelum menutup jendela
-            ini — bila hilang, Anda perlu membuat kode baru.
+            Di layar ini, tautannya hanya ditampilkan sekarang — bila Anda ingin menyimpan
+            salinannya sendiri, salin dulu sebelum menutup jendela ini.
           </AlertDescription>
         </Alert>
 

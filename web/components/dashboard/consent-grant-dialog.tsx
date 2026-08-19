@@ -209,7 +209,8 @@ function ConsentGrantForm({
           <p className="text-xs text-muted-foreground">
             Dengan memberi izin, {found.name} dapat melihat hasil cek risiko dan usia kehamilan Anda
             serta menulis catatan edukasi. Data lain — berat badan, golongan darah, riwayat
-            penyakit, dan kontak Anda — tetap tidak terlihat.
+            penyakit, dan kontak Anda — tetap tidak terlihat. Tautan aksesnya kami kirim ke email
+            mereka.
           </p>
         </div>
       )}

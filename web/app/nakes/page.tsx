@@ -26,8 +26,8 @@ function formatDate(value: string): string {
  *
  * Daftar pasien di sini bukan pengganti kode tautan: sebuah nama hanya bisa
  * masuk ke daftar setelah kodenya ditukar sekali, dan langsung hilang begitu
- * izinnya dicabut. Kolom kode tetap ada untuk kasus tautan yang dikirim
- * lewat pesan lalu disalin manual.
+ * izinnya dicabut. Jalur utama kode adalah email pemberitahuan izin; kolom
+ * tempel kode tetap ada untuk tautan yang sampai lewat jalur lain.
  */
 export default function NakesPage() {
   const router = useRouter();
@@ -93,6 +93,10 @@ export default function NakesPage() {
             <label htmlFor="access-code" className="text-sm font-semibold text-foreground">
               Buka dengan kode tautan
             </label>
+            <p className="text-xs text-muted-foreground">
+              Tautan akses dikirim ke email Anda begitu pasien memberi izin. Kolom ini untuk kode
+              yang Anda terima lewat jalur lain, mis. disalin pasien dari layarnya.
+            </p>
             <div className="flex flex-wrap items-start gap-2">
               <div className="min-w-48 flex-1">
                 <Input

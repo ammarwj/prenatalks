@@ -9,6 +9,7 @@ use App\Http\Resources\RiskAssessmentResource;
 use App\Models\HealthWorkerConsent;
 use App\Models\HealthWorkerNote;
 use App\Models\RiskAssessment;
+use App\Notifications\HealthWorkerNoteReceivedNotification;
 use App\Services\AuditRecorder;
 use App\Services\HealthWorkerConsentService;
 use App\Services\HealthWorkerPatientService;
@@ -137,6 +138,11 @@ class HealthWorkerAccessController extends Controller
             'risk_assessment_id' => $assessmentId,
             'body' => $request->validated('body'),
         ]);
+
+        // Tanpa kabar ini catatan hanya ditemukan pengguna yang kebetulan
+        // membuka halaman privasinya — padahal isinya justru sering menuntut
+        // tindak lanjut cepat.
+        $consent->user?->notify(new HealthWorkerNoteReceivedNotification($request->user('api')->name));
 
         return $this->success(
             new NoteResource($note->load('healthWorker')),

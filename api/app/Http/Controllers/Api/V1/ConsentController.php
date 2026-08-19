@@ -9,6 +9,8 @@ use App\Http\Resources\HealthWorker\HealthWorkerDirectoryResource;
 use App\Http\Resources\HealthWorker\NoteResource;
 use App\Models\HealthWorkerConsent;
 use App\Models\User;
+use App\Notifications\HealthWorkerConsentGrantedNotification;
+use App\Notifications\HealthWorkerConsentRevokedNotification;
 use App\Services\HealthWorkerConsentService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -100,11 +102,19 @@ class ConsentController extends Controller
         }
 
         [$code, $consent] = $this->consents->issue($user, $healthWorker, $request->validated('expires_at'));
+        $link = $this->consents->linkFor($code);
+
+        // Tautan ikut dikirim ke email penerima, bukan hanya ditampilkan
+        // sekali ke pemberi izin: tanpa ini satu-satunya jalan tautan sampai
+        // ke tujuan adalah pengguna menyalinnya lalu meneruskannya lewat
+        // WhatsApp — saluran yang lebih mudah salah alamat daripada email
+        // akun yang justru sudah terikat pada izin ini.
+        $healthWorker->notify(new HealthWorkerConsentGrantedNotification($user->name, $link));
 
         return $this->success([
             'consent' => new ConsentResource($consent->load('healthWorker')),
             'access_code' => $code,
-            'access_link' => $this->consents->linkFor($code),
+            'access_link' => $link,
         ], 'Izin diberikan — bagikan tautan ini hanya kepada tenaga kesehatan tersebut', status: 201);
     }
 
@@ -119,11 +129,16 @@ class ConsentController extends Controller
         );
 
         $code = $this->consents->regenerate($consent);
+        $link = $this->consents->linkFor($code);
+
+        $consent->healthWorker?->notify(
+            new HealthWorkerConsentGrantedNotification($request->user('api')->name, $link, isRenewed: true)
+        );
 
         return $this->success([
             'consent' => new ConsentResource($consent->load('healthWorker')),
             'access_code' => $code,
-            'access_link' => $this->consents->linkFor($code),
+            'access_link' => $link,
         ], 'Kode tautan baru dibuat — tautan lama tidak berlaku lagi');
     }
 
@@ -136,7 +151,17 @@ class ConsentController extends Controller
     {
         $this->guardOwnership($request, $consent);
 
+        $wasActive = $consent->revoked_at === null;
         $consent->revoke();
+
+        // Hanya pada pencabutan yang benar-benar terjadi — mengirim email
+        // tiap kali tombol ditekan ulang akan mengabari hal yang sama
+        // berkali-kali.
+        if ($wasActive) {
+            $consent->healthWorker?->notify(
+                new HealthWorkerConsentRevokedNotification($request->user('api')->name)
+            );
+        }
 
         return $this->success(
             new ConsentResource($consent->load('healthWorker')),
