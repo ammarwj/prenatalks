@@ -127,17 +127,10 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Disclaimer medis wajib PRD §12.4 — tampil di footer seluruh situs. */}
-      <div className="border-t border-border">
-        <p className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-xs leading-relaxed text-muted-foreground">
-          {RISK_DISCLAIMER_TEXT}
-        </p>
-      </div>
-
       <div className="bg-brand-purple">
         <p className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 text-center text-xs text-white/90">
-          &copy; {new Date().getFullYear()} PrenaTalks. Sejak 2020. Seluruh
-          hak cipta dilindungi.
+          &copy; {new Date().getFullYear()} PrenaTalks. Sejak 2020. Seluruh hak
+          cipta dilindungi.
         </p>
       </div>
     </footer>
