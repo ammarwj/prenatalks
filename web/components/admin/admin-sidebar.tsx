@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
-
 import { ADMIN_NAV_GROUPS, isAdminNavItemActive } from "@/components/admin/admin-nav-items";
 import { Logo } from "@/components/shared/logo";
-import { Button } from "@/components/ui/button";
+import { SidebarUserFooter } from "@/components/shared/sidebar-user-footer";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { ROLE_LABELS } from "@/lib/validations/user";
 import { cn } from "@/lib/utils";
@@ -76,24 +74,12 @@ export function AdminSidebar({
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-border p-3">
-        {user && (
-          <div className="px-2 pb-2">
-            <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</p>
-          </div>
-        )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onLogout}
-          className="w-full justify-start gap-2.5 px-3 text-muted-foreground hover:text-foreground"
-        >
-          <LogOut className="size-4" />
-          Keluar
-        </Button>
-      </div>
+      <SidebarUserFooter
+        name={user?.name ?? "Akun saya"}
+        secondary={user ? ROLE_LABELS[user.role] : ""}
+        accentClassName="bg-brand-purple-soft text-brand-purple"
+        onLogout={onLogout}
+      />
     </div>
   );
 }

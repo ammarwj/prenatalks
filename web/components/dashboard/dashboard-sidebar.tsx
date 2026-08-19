@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, LogOut } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 import {
   DASHBOARD_NAV_GROUPS,
@@ -10,7 +10,7 @@ import {
 } from "@/components/dashboard/dashboard-nav-items";
 import { GestationalChip } from "@/components/dashboard/gestational-chip";
 import { Logo } from "@/components/shared/logo";
-import { Button } from "@/components/ui/button";
+import { SidebarUserFooter } from "@/components/shared/sidebar-user-footer";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -84,24 +84,12 @@ export function DashboardSidebar({
         ))}
       </nav>
 
-      <div className="shrink-0 border-t border-border p-3">
-        {user && (
-          <div className="px-2 pb-2">
-            <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-          </div>
-        )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onLogout}
-          className="w-full justify-start gap-2.5 px-3 text-muted-foreground hover:text-foreground"
-        >
-          <LogOut className="size-4" />
-          Keluar
-        </Button>
-      </div>
+      <SidebarUserFooter
+        name={user?.name ?? "Akun saya"}
+        secondary={user?.email ?? ""}
+        accentClassName="bg-primary-soft text-primary-text"
+        onLogout={onLogout}
+      />
     </div>
   );
 }
