@@ -85,12 +85,16 @@ export function SidebarUserFooter({
         </div>
       </div>
 
+      {/* Tombol ini sengaja punya permukaan sendiri, tidak seperti item menu
+          di atasnya. Sebagai teks polos ia terbaca seperti menu yang mati —
+          padahal ia satu-satunya aksi di sidebar, bukan tautan. Warna merah
+          baru muncul saat hover: mengakhiri sesi memang berkonsekuensi, tapi
+          bukan hal menakutkan yang perlu berteriak sepanjang waktu. */}
       <Button
         type="button"
         variant="ghost"
-        size="sm"
         onClick={onLogout}
-        className="mt-0.5 w-full justify-start gap-2.5 rounded-xl px-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="mt-2 h-10 w-full justify-center gap-2 rounded-xl bg-muted text-sm font-semibold text-muted-foreground hover:bg-feature-danger-soft hover:text-danger"
       >
         <LogOut className="size-4" />
         Keluar
