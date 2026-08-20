@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2, MailWarning } from "lucide-react";
 
 import { DashboardBottomNav } from "@/components/dashboard/dashboard-bottom-nav";
@@ -26,6 +26,7 @@ import { useDashboardStore } from "@/lib/stores/dashboard-store";
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isHydrating } = useSessionRehydrate();
   const accessToken = useAuthStore((state) => state.accessToken);
   const user = useAuthStore((state) => state.user);
@@ -40,13 +41,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
     if (!accessToken) {
-      router.replace("/masuk");
+      // Tujuan asal ikut dibawa supaya tamu yang mengklik pintasan di landing
+      // page (mis. kartu "Cek Risiko") kembali ke fitur itu setelah masuk,
+      // bukan dibuang ke beranda dashboard.
+      router.replace(`/masuk?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
     if (isManager) {
       router.replace("/admin");
     }
-  }, [isHydrating, accessToken, isManager, router]);
+  }, [isHydrating, accessToken, isManager, pathname, router]);
 
   /**
    * Ringkasan dimuat sekali di sini, bukan di tiap halaman: chip usia

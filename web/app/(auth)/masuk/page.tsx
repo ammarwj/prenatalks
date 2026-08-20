@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -14,12 +14,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ApiRequestError } from "@/lib/api-error";
 import { authLogin } from "@/lib/auth";
-import { landingPathForRole } from "@/lib/auth-routes";
+import { isAdminRole, landingPathForRole, safeRedirectPath } from "@/lib/auth-routes";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
+/**
+ * `useSearchParams()` menuntut batas `<Suspense>` di halaman yang dirender
+ * statis, dan `/masuk` termasuk salah satunya — tanpa pembungkus ini
+ * `next build` gagal. Pola yang sama dipakai `app/kalkulator/page.tsx`.
+ */
 export default function MasukPage() {
+  return (
+    <Suspense>
+      <MasukForm />
+    </Suspense>
+  );
+}
+
+function MasukForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setSession = useAuthStore((state) => state.setSession);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -35,10 +49,21 @@ export default function MasukPage() {
     try {
       const data = await authLogin(values.email, values.password);
       setSession(data.access_token, data.user);
+
       // Tujuan ditentukan role: admin/super_admin ke panel admin, pengguna
       // biasa ke ringkasan dashboard (F-13) — sesuai sitemap PRD §8 yang
       // memisahkan `/dashboard` dan `/admin` sebagai dua akar area.
-      router.push(landingPathForRole(data.user.role));
+      //
+      // `?redirect=` menimpanya hanya untuk peran non-pengelola: guard
+      // `/dashboard/*` tetap memantulkan pengelola ke /admin, jadi menurutinya
+      // di sini cuma menghasilkan satu kedipan halaman sebelum dipantulkan.
+      // Nilainya disaring `safeRedirectPath()` — lihat alasannya di sana.
+      const home = landingPathForRole(data.user.role);
+      const redirectTo = isAdminRole(data.user.role)
+        ? null
+        : safeRedirectPath(searchParams.get("redirect"));
+
+      router.push(redirectTo ?? home);
     } catch (err) {
       setServerError(
         err instanceof ApiRequestError ? err.message : "Terjadi kesalahan, coba lagi."

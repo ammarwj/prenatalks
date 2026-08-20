@@ -8,11 +8,18 @@ import {
   Siren,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 import { Reveal } from "@/components/shared/reveal";
+import { FEATURE_LINKS, type FeatureId } from "@/lib/feature-links";
 
+/**
+ * `id` diketikkan `FeatureId`, bukan `string`: kartu tanpa tujuan di
+ * `FEATURE_LINKS` langsung gagal saat `tsc` alih-alih diam-diam jadi kartu
+ * mati seperti sebelumnya, ketika panahnya cuma hiasan.
+ */
 const FEATURES: {
-  id: string;
+  id: FeatureId;
   icon: LucideIcon;
   title: string;
   desc: string;
@@ -97,9 +104,19 @@ export function FeatureGrid() {
       <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature, i) => (
           <Reveal key={feature.id} delay={(i % 3) * 0.06}>
-            <div
+            {/*
+              `id` dan `scroll-mt-24` wajib tetap di elemen terluar: dua tombol
+              CTA di hero menaut ke `#belajar` dan `#cek-risiko`, dan
+              `scroll-mt-24` yang menjaga kartunya tidak tertutup header sticky
+              saat anchor itu dipakai.
+
+              Cincin fokus ditambahkan karena kartunya kini target klik seukuran
+              kartu — tanpa itu pengguna keyboard tidak tahu sedang di mana.
+            */}
+            <Link
               id={feature.id}
-              className="group scroll-mt-24 flex h-full flex-col rounded-3xl border border-border bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-soft"
+              href={FEATURE_LINKS[feature.id]}
+              className="group scroll-mt-24 flex h-full flex-col items-center rounded-3xl border border-border bg-white p-6 text-center outline-none transition-all duration-200 hover:-translate-y-1 hover:shadow-soft focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <span
                 className={`flex size-16 items-center justify-center rounded-full ${feature.iconBg}`}
@@ -111,7 +128,14 @@ export function FeatureGrid() {
               >
                 {feature.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {/*
+                `grow` membuat deskripsi menyerap sisa tinggi kartu sehingga
+                panah keenam kartu sebaris meski jumlah barisnya beda — idiom
+                yang sama dipakai kartu testimoni. Sebelumnya kerataan itu tidak
+                terlalu terlihat karena isinya rata kiri; setelah rata tengah,
+                panah yang tidak sejajar langsung mencolok.
+              */}
+              <p className="mt-2 grow text-sm leading-relaxed text-muted-foreground">
                 {feature.desc}
               </p>
               <span
@@ -119,7 +143,7 @@ export function FeatureGrid() {
               >
                 <ArrowRight className="size-4" />
               </span>
-            </div>
+            </Link>
           </Reveal>
         ))}
       </div>

@@ -26,3 +26,19 @@ export const landingPathForRole = (role?: UserRole): string => {
   }
   return "/dashboard";
 };
+
+/**
+ * Menyaring `?redirect=` sebelum dipakai menavigasi setelah login.
+ *
+ * Nilainya datang dari URL, jadi tidak boleh dipercaya: tanpa penyaringan ini
+ * `/masuk?redirect=https://situs-lain` mengubah halaman masuk jadi batu
+ * loncatan phishing yang tampak sah karena domainnya benar. Hanya path internal
+ * yang diterima, dan `//host` ikut ditolak karena browser memperlakukannya
+ * sebagai URL protocol-relative ke domain lain.
+ */
+export function safeRedirectPath(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+  return value;
+}

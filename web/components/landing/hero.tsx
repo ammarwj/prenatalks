@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBrand } from "@/components/shared/brand-provider";
 import { Reveal } from "@/components/shared/reveal";
+import { FEATURE_LINKS } from "@/lib/feature-links";
 import type { BrandHeroAsset } from "@/lib/types";
 
 const FLOATING_CARDS: {
@@ -145,10 +146,16 @@ export function Hero() {
               variant="outline"
               className="h-12 rounded-full border-brand-purple px-6 text-base text-brand-purple hover:bg-brand-purple-soft"
             >
-              <a href="#cek-risiko">
+              {/*
+                Menuju tujuan yang sama dengan kartu di grid fitur, bukan
+                anchor `#cek-risiko` seperti sebelumnya: menggulir ke kartu yang
+                isinya tautan ke tempat lain hanya menambah satu langkah.
+                `id` kartunya tetap ada, jadi anchor lama tidak putus.
+              */}
+              <Link href={FEATURE_LINKS["cek-risiko"]}>
                 <ShieldCheck className="size-4" />
                 Cek Risiko
-              </a>
+              </Link>
             </Button>
             <Button
               asChild
@@ -156,10 +163,10 @@ export function Hero() {
               variant="ghost"
               className="h-12 rounded-full border border-border bg-white/70 px-6 text-base hover:bg-white"
             >
-              <a href="#belajar">
+              <Link href={FEATURE_LINKS.belajar}>
                 <BookOpen className="size-4" />
                 Belajar Gratis
-              </a>
+              </Link>
             </Button>
           </div>
         </Reveal>
