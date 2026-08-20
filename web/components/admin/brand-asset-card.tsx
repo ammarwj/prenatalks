@@ -56,7 +56,7 @@ export function BrandAssetCard({
       await revalidateBrandCache(accessToken);
       toast.success(`${title} diperbarui.`);
     } catch (err) {
-      toast.error(err instanceof ApiRequestError ? err.message : "Gagal mengunggah, coba lagi.");
+      toast.error(err instanceof ApiRequestError ? err.detail() : "Gagal mengunggah, coba lagi.");
     } finally {
       setBusy(null);
       // Dikosongkan supaya memilih berkas yang sama dua kali tetap memicu
@@ -72,7 +72,7 @@ export function BrandAssetCard({
       await revalidateBrandCache(accessToken);
       toast.success(`${title} kembali ke bawaan.`);
     } catch (err) {
-      toast.error(err instanceof ApiRequestError ? err.message : "Gagal mengembalikan, coba lagi.");
+      toast.error(err instanceof ApiRequestError ? err.detail() : "Gagal mengembalikan, coba lagi.");
     } finally {
       setBusy(null);
     }
