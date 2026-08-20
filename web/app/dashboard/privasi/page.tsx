@@ -8,6 +8,7 @@ import { ConsentCard } from "@/components/dashboard/consent-card";
 import { ConsentGrantDialog } from "@/components/dashboard/consent-grant-dialog";
 import { ConsentLinkDialog } from "@/components/dashboard/consent-link-dialog";
 import { ConsentNotesDialog } from "@/components/dashboard/consent-notes-dialog";
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -124,10 +125,7 @@ export default function PrivasiPage() {
       )}
 
       {consents === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat daftar izin...
-        </div>
+        <ListSkeleton rows={3} framed={false} withAvatar label="Memuat daftar izin" />
       ) : consents.length === 0 ? (
         <Card className="rounded-3xl border border-dashed border-border">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">

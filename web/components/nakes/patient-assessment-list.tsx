@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Loader2, PenLine, TriangleAlert } from "lucide-react";
+import { ChevronDown, ChevronUp, PenLine, TriangleAlert } from "lucide-react";
 
 import { RiskLevelBadge } from "@/components/dashboard/risk-level-badge";
+import { InlineLoader } from "@/components/shared/loading-state";
 import { Button } from "@/components/ui/button";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { RiskAssessment, RiskAssessmentSummary } from "@/lib/types";
@@ -128,10 +129,7 @@ export function PatientAssessmentList({
             {isOpen && (
               <div className="mt-3 rounded-2xl bg-muted/50 px-4 py-3">
                 {loadingId === assessment.id ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
-                    Memuat rincian...
-                  </div>
+                  <InlineLoader label="Memuat rincian" />
                 ) : errorId?.id === assessment.id ? (
                   <p className="text-sm font-medium text-danger">{errorId.message}</p>
                 ) : detail ? (

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 import { AuditChangeList } from "@/components/admin/audit-change-list";
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
 import { TablePagination } from "@/components/admin/table-pagination";
+import { TableSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -191,10 +191,7 @@ export default function AuditLogPage() {
       )}
 
       {logs === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <TableSkeleton columns={5} rows={8} lastColumnAction={false} widths={["55%", "60%", "45%", "40%", "50%"]} />
       ) : logs.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           Belum ada catatan yang cocok dengan filter Anda.

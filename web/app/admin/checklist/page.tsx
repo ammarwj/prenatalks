@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { ChecklistItemFormDialog } from "@/components/admin/checklist-item-form-dialog";
 import { ChecklistItemRow } from "@/components/admin/checklist-item-row";
+import { GroupedListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -186,10 +187,7 @@ export default function ChecklistAdminPage() {
       )}
 
       {items === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <GroupedListSkeleton groups={3} rowsPerGroup={3} label="Memuat checklist" />
       ) : (
         <div className="space-y-8">
           {groups.map((group) => {

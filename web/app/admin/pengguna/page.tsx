@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Loader2, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
 import { TablePagination } from "@/components/admin/table-pagination";
 import { UserRoleDialog } from "@/components/admin/user-role-dialog";
+import { TableSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -206,10 +207,7 @@ export default function PenggunaAdminPage() {
       )}
 
       {users === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <TableSkeleton columns={5} rows={8} widths={["60%", "75%", "45%", "40%"]} />
       ) : users.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           Tidak ada pengguna yang cocok dengan pencarian atau filter Anda.

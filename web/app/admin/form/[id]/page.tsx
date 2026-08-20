@@ -2,10 +2,10 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { FormBuilderForm } from "@/components/admin/form-builder-form";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { AdminForm } from "@/lib/types";
@@ -70,10 +70,7 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
       )}
 
       {form === null && !loadError ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <FormSkeleton fields={3} withTextarea />
       ) : form ? (
         <FormBuilderForm key={form.updated_at} initialData={form} onSaved={handleSaved} />
       ) : null}

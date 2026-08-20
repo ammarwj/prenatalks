@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ClipboardCheck, ClipboardList, Loader2 } from "lucide-react";
+import { ArrowRight, ClipboardCheck, ClipboardList } from "lucide-react";
 
+import { CardGridSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formMetaText } from "@/lib/forms";
 import { useDashboardStore } from "@/lib/stores/dashboard-store";
@@ -43,10 +44,7 @@ export default function DashboardFormPage() {
 
       {overview === null ? (
         !loadError && (
-          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat daftar form...
-          </div>
+          <CardGridSkeleton count={3} columns={1} lines={2} withIcon withAction label="Memuat daftar form" />
         )
       ) : forms.length === 0 ? (
         <section className="rounded-3xl border border-dashed border-border bg-white p-8 text-center shadow-soft">

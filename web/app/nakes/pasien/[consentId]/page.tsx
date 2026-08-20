@@ -2,11 +2,12 @@
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 import { NoteForm } from "@/components/nakes/note-form";
 import { PatientAssessmentList } from "@/components/nakes/patient-assessment-list";
+import { DetailSkeleton } from "@/components/shared/loading-state";
 import { RiskDisclaimer } from "@/components/shared/risk-disclaimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -80,10 +81,7 @@ export default function PasienPage({ params }: { params: Promise<{ consentId: st
 
   if (!patient) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat data pasien...
-      </div>
+      <DetailSkeleton paragraphs={2} label="Memuat data pasien" />
     );
   }
 

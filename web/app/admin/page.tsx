@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 import { AdminStatCards } from "@/components/admin/admin-stat-cards";
+import { StatCardsSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { AdminStats } from "@/lib/types";
@@ -47,12 +47,7 @@ export default function AdminHomePage() {
       )}
 
       {stats === null
-        ? !loadError && (
-            <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Memuat statistik...
-            </div>
-          )
+        ? !loadError && <StatCardsSkeleton />
         : <AdminStatCards stats={stats} />}
     </div>
   );

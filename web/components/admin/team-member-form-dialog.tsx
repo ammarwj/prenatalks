@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 
+import { FileUpload } from "@/components/shared/file-upload";
 import { FormField } from "@/components/shared/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -132,66 +132,35 @@ function TeamMemberForm({
         <Textarea id="description" rows={3} {...register("description")} />
       </FormField>
 
-      <FormField label="Foto" htmlFor="photo" hint="Opsional. JPG/PNG/WebP, maksimal 2 MB.">
-        <div className="space-y-3">
-          {/*
-            Status "hapus foto" dibaca lewat Controller, bukan `watch()`:
-            `watch` membuat React Compiler melewatkan komponen ini (bailout),
-            sedangkan nilainya memang hanya dibutuhkan di dalam blok ini.
-          */}
-          <Controller
-            name="removePhoto"
-            control={control}
-            render={({ field }) => (
-              <>
-                {initialData?.photo_url && !field.value && (
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={initialData.photo_url}
-                      alt=""
-                      width={56}
-                      height={56}
-                      className="size-14 rounded-full object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => field.onChange(true)}
-                    >
-                      Hapus foto
-                    </Button>
-                  </div>
-                )}
-                {field.value && (
-                  <p className="text-xs font-medium text-danger">
-                    Foto akan dihapus saat disimpan.{" "}
-                    <button
-                      type="button"
-                      className="underline"
-                      onClick={() => field.onChange(false)}
-                    >
-                      Batalkan
-                    </button>
-                  </p>
-                )}
-              </>
-            )}
-          />
-          <Controller
-            name="photo"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="photo"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="h-11 rounded-xl"
-                onChange={(e) => field.onChange(e.target.files?.[0])}
-              />
-            )}
-          />
-        </div>
+      <FormField label="Foto" htmlFor="photo">
+        <Controller
+          name="photo"
+          control={control}
+          render={({ field }) => (
+            <Controller
+              name="removePhoto"
+              control={control}
+              render={({ field: removeField }) => (
+                <FileUpload
+                  id="photo"
+                  accept="image/jpeg,image/png,image/webp"
+                  maxSizeKb={2048}
+                  previewShape="circle"
+                  value={field.value}
+                  onChange={(file) => {
+                    field.onChange(file);
+                    if (file) removeField.onChange(false);
+                  }}
+                  existingUrl={initialData?.photo_url}
+                  removed={removeField.value}
+                  onRemoveExisting={() => removeField.onChange(true)}
+                  onUndoRemove={() => removeField.onChange(false)}
+                  error={errors.photo?.message}
+                />
+              )}
+            />
+          )}
+        />
       </FormField>
 
       <Controller

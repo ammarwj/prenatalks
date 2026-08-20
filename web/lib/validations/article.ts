@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { optionalFileSchema } from "@/lib/validations/file";
+
 import type { AdminArticle, ArticleStatus, LifeStage } from "@/lib/types";
 
 export const LIFE_STAGE_OPTIONS: { value: LifeStage; label: string }[] = [
@@ -29,7 +31,7 @@ export const articleSchema = z.object({
     .or(z.literal("")),
   excerpt: z.string().max(500, "Maksimal 500 karakter").optional(),
   content: z.string().refine((v) => !isContentEmpty(v), "Isi artikel wajib diisi"),
-  cover: z.instanceof(File).optional(),
+  cover: optionalFileSchema({ accept: "image/*", maxSizeKb: 4096 }),
   removeCover: z.boolean(),
   categoryId: z.string().optional(),
   trimester: z.string().optional(),

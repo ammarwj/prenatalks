@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 import {
   BrandAssetCard,
@@ -11,6 +11,7 @@ import {
   LogoPreview,
 } from "@/components/admin/brand-asset-card";
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
+import { CardGridSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { BrandSettings } from "@/lib/types";
@@ -74,10 +75,7 @@ export default function IdentitasSitusPage() {
           <AlertDescription>{loadError}</AlertDescription>
         </Alert>
       ) : brand === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat aset situs...
-        </div>
+        <CardGridSkeleton count={3} columns={1} lines={3} withAction label="Memuat aset situs" />
       ) : (
         <div className="space-y-5">
           <BrandAssetCard
@@ -85,6 +83,8 @@ export default function IdentitasSitusPage() {
             title="Logo"
             description="Tampil di header semua halaman, dashboard ibu hamil, dan panel admin."
             requirements="PNG, JPG, atau WebP · minimal 128×128 · maksimal 2 MB"
+            maxSizeKb={2048}
+            minSide={128}
             produces="Disimpan sebagai WebP lebar 512 px. Latar transparan dipertahankan — pakai PNG bertransparansi agar menyatu dengan header putih."
             version={brand.brand_logo?.version ?? null}
             preview={<LogoPreview url={brand.brand_logo?.url ?? "/brand/logo.png"} />}
@@ -96,6 +96,9 @@ export default function IdentitasSitusPage() {
             title="Favicon"
             description="Ikon kecil di tab browser, bookmark, dan layar utama ponsel."
             requirements="PNG, JPG, atau WebP · wajib persegi · minimal 128×128 · maksimal 1 MB"
+            maxSizeKb={1024}
+            minSide={128}
+            square
             produces="Menghasilkan dua berkas: favicon.ico berisi ukuran 16, 32, dan 48 px, plus apple-touch-icon 180×180 untuk iOS. Gambar sederhana dan berkontras tinggi terbaca paling jelas di 16 px."
             version={brand.brand_favicon?.version ?? null}
             preview={<FaviconPreview url={brand.brand_favicon?.url ?? "/brand/favicon-default.ico"} />}
@@ -107,6 +110,8 @@ export default function IdentitasSitusPage() {
             title="Gambar Hero"
             description="Foto besar di bagian paling atas halaman depan."
             requirements="PNG, JPG, atau WebP · minimal 800×800 · maksimal 5 MB"
+            maxSizeKb={5120}
+            minSide={800}
             produces="Menghasilkan dua berkas: WebP lebar 1200 px untuk halaman depan, dan gambar 1200×630 untuk pratinjau saat tautan dibagikan di WhatsApp. Foto dipasang dalam bingkai lingkaran, jadi letakkan subjek di tengah."
             version={brand.brand_hero?.version ?? null}
             preview={<HeroPreview url={brand.brand_hero?.url ?? null} />}

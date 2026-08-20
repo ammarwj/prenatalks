@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, Lock, SearchX } from "lucide-react";
 import { toast } from "sonner";
 
 import { DynamicFormField } from "@/components/public/dynamic-form-field";
+import { QuestionnaireSkeleton } from "@/components/shared/loading-state";
 import { Logo } from "@/components/shared/logo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -154,10 +155,7 @@ export default function PublicSurveyPage({ params }: { params: Promise<{ slug: s
   if (!form) {
     return (
       <PageShell>
-        <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat form...
-        </div>
+        <QuestionnaireSkeleton questions={3} label="Memuat form" />
       </PageShell>
     );
   }

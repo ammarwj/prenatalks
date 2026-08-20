@@ -6,6 +6,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
+import { TableSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,10 +98,7 @@ export default function QuestionnaireListPage() {
       )}
 
       {questionnaires === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <TableSkeleton columns={5} rows={4} widths={["70%", "30%", "40%", "45%"]} />
       ) : questionnaires.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           Belum ada kuesioner. Buat kuesioner pertama untuk memulai cek risiko.

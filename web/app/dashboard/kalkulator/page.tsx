@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 import { CalculatorForm } from "@/components/calculator/calculator-form";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { RiskDisclaimer } from "@/components/shared/risk-disclaimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
@@ -51,10 +51,7 @@ export default function DashboardKalkulatorPage() {
       )}
 
       {activePregnancy === undefined ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <FormSkeleton fields={3} />
       ) : (
         <CalculatorForm
           mode="dashboard"

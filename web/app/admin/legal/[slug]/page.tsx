@@ -2,10 +2,11 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 import { LegalDocumentForm } from "@/components/admin/legal-document-form";
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { AdminLegalDocument } from "@/lib/types";
@@ -107,10 +108,7 @@ export default function EditLegalDocumentPage({
       )}
 
       {document === null && !loadError ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat dokumen...
-        </div>
+        <FormSkeleton fields={2} withTextarea label="Memuat dokumen" />
       ) : document ? (
         // TipTap tidak mengikuti perubahan prop `content` setelah mount, jadi
         // form di-remount lewat `key` supaya isi editor benar-benar ikut

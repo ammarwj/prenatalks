@@ -6,6 +6,7 @@ import { ArrowLeft, Download, Loader2, RefreshCw, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { ResponseDistributionChart } from "@/components/admin/response-distribution-chart";
+import { CardSkeleton, TableSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,9 +145,13 @@ export default function FormResponsesPage({ params }: { params: Promise<{ id: st
       )}
 
       {submissions === null && !loadError ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
+        <div className="space-y-6">
+          <CardSkeleton lines={0} withIcon />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <CardSkeleton lines={3} />
+            <CardSkeleton lines={3} />
+          </div>
+          <TableSkeleton columns={4} rows={5} lastColumnAction={false} />
         </div>
       ) : summary ? (
         <>

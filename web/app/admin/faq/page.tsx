@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { FaqFormDialog } from "@/components/admin/faq-form-dialog";
 import { FaqItem } from "@/components/admin/faq-item";
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,10 +151,7 @@ export default function FaqAdminPage() {
       )}
 
       {faqs === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <ListSkeleton rows={5} framed={false} withHandle label="Memuat FAQ" />
       ) : faqs.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           Belum ada FAQ. Tambah FAQ pertama untuk memulai.

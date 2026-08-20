@@ -2,6 +2,8 @@
 
 import { Check, Star } from "lucide-react";
 
+import { FileUpload } from "@/components/shared/file-upload";
+import { acceptFromExtensions } from "@/lib/file-upload";
 import { FormField } from "@/components/shared/form-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -251,11 +253,16 @@ function FieldControl({
 
     case "file":
       return (
-        <Input
+        <FileUpload
           id={htmlFor}
-          type="file"
-          className={inputClass}
-          onChange={(e) => onChange(e.target.files?.[0])}
+          accept={acceptFromExtensions(field.validation?.allowed_extensions)}
+          // Dibatasi 2048 sama seperti `FormFieldRuleBuilder` di backend, yang
+          // memakai `min($validation['max_size_kb'] ?? 2048, 2048)` — nilai
+          // admin di atas itu tetap ditolak server, jadi menampilkannya sebagai
+          // batas yang berlaku hanya akan menyesatkan responden.
+          maxSizeKb={Math.min(field.validation?.max_size_kb ?? 2048, 2048)}
+          value={value instanceof File ? value : undefined}
+          onChange={(file) => onChange(file)}
         />
       );
 

@@ -3,8 +3,8 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 
+import { InlineLoader } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiPost, ApiRequestError } from "@/lib/api-client";
@@ -63,9 +63,6 @@ export default function AksesTautanPage({ params }: { params: Promise<{ code: st
   }
 
   return (
-    <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-      <Loader2 className="size-4 animate-spin" />
-      Membuka tautan akses...
-    </div>
+    <InlineLoader label="Membuka tautan akses" className="py-12" />
   );
 }

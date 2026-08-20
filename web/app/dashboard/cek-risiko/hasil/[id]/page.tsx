@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Download, History, Loader2, Share2 } from "lucide-react";
+import { Download, History, Share2 } from "lucide-react";
 
 import { RiskDangerAlert } from "@/components/dashboard/risk-danger-alert";
 import { RiskLevelBadge } from "@/components/dashboard/risk-level-badge";
+import { DetailSkeleton } from "@/components/shared/loading-state";
 import { RiskDisclaimer } from "@/components/shared/risk-disclaimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -87,10 +88,7 @@ export default function HasilCekRisikoPage() {
 
   if (!assessment) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat hasil...
-      </div>
+      <DetailSkeleton paragraphs={2} label="Memuat hasil" />
     );
   }
 

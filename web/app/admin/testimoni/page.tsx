@@ -22,6 +22,7 @@ import { toast } from "sonner";
 
 import { TestimonialFormDialog } from "@/components/admin/testimonial-form-dialog";
 import { TestimonialItem } from "@/components/admin/testimonial-item";
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -181,10 +182,7 @@ export default function TestimoniAdminPage() {
 
       {testimonials === null ? (
         !loadError && (
-          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat testimoni...
-          </div>
+          <ListSkeleton rows={4} framed={false} withHandle withAvatar label="Memuat testimoni" />
         )
       ) : testimonials.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">

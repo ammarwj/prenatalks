@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Pencil } from "lucide-react";
+import { ExternalLink, Pencil } from "lucide-react";
 
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
@@ -67,12 +68,7 @@ export default function LegalAdminPage() {
           )}
 
           {documents === null ? (
-            !loadError && (
-              <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Memuat dokumen...
-              </div>
-            )
+            !loadError && <ListSkeleton rows={3} framed={false} label="Memuat dokumen" />
           ) : (
             <div className="space-y-3">
               {documents.map((document) => (

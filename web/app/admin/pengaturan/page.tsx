@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, FileClock, Loader2 } from "lucide-react";
+import { ExternalLink, FileClock } from "lucide-react";
 
 import { CommunitySettingsForm } from "@/components/admin/community-settings-form";
 import { ContactSettingsForm } from "@/components/admin/contact-settings-form";
 import { SocialSettingsForm } from "@/components/admin/social-settings-form";
 import { StatsSettingsForm } from "@/components/admin/stats-settings-form";
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type {
@@ -94,9 +95,10 @@ export default function PengaturanAdminPage() {
 
       {settings === null ? (
         !loadError && (
-          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat pengaturan...
+          <div className="space-y-6">
+            <FormSkeleton fields={3} label="Memuat pengaturan" />
+            <FormSkeleton fields={4} />
+            <FormSkeleton fields={3} />
           </div>
         )
       ) : (

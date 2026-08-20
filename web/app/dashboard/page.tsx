@@ -1,12 +1,12 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 
 import { ChecklistSummaryCard } from "@/components/dashboard/checklist-summary-card";
 import { PendingFormsCard } from "@/components/dashboard/pending-forms-card";
 import { PregnancySummaryCard } from "@/components/dashboard/pregnancy-summary-card";
 import { RecommendedArticlesCard } from "@/components/dashboard/recommended-articles-card";
 import { RiskSummaryCard } from "@/components/dashboard/risk-summary-card";
+import { OverviewSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useDashboardStore } from "@/lib/stores/dashboard-store";
@@ -45,12 +45,7 @@ export default function DashboardPage() {
       )}
 
       {overview === null ? (
-        !loadError && (
-          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat ringkasan...
-          </div>
-        )
+        !loadError && <OverviewSkeleton />
       ) : (
         <>
           <PregnancySummaryCard pregnancy={overview.pregnancy} />

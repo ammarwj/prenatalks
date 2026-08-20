@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -71,10 +71,7 @@ function ConsentNotesList({ consentId }: { consentId: number }) {
 
   if (notes === null) {
     return (
-      <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat catatan...
-      </div>
+      <ListSkeleton rows={2} framed={false} withAction={false} label="Memuat catatan" />
     );
   }
 

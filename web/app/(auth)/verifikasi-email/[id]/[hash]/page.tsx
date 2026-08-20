@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 import { AuthCard } from "@/components/shared/auth-card";
+import { InlineLoader } from "@/components/shared/loading-state";
 import { apiPost, ApiRequestError } from "@/lib/api-client";
 
 type Status = "loading" | "success" | "error";
@@ -54,7 +55,7 @@ function VerifyEmailContent() {
         subtitle="Mohon tunggu sebentar."
       >
         <div className="flex justify-center py-4">
-          <Loader2 className="size-8 animate-spin text-primary" />
+          <InlineLoader label="Memverifikasi email" />
         </div>
       </AuthCard>
     );

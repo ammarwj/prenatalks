@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { ImageOff, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
+import { FileUpload } from "@/components/shared/file-upload";
 import { FormField } from "@/components/shared/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -40,16 +41,12 @@ export function VideoForm({
 }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-    initialData?.thumbnail_url ?? null
-  );
   const isEditing = !!initialData;
 
   const {
     register,
     handleSubmit,
     control,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<VideoInput>({
     resolver: zodResolver(videoSchema),
@@ -77,19 +74,7 @@ export function VideoForm({
     }
   }
 
-  function handleThumbnailChange(file: File | undefined) {
-    setValue("thumbnail", file, { shouldDirty: true });
-    if (file) {
-      setValue("removeThumbnail", false);
-      setThumbnailPreview(URL.createObjectURL(file));
-    }
-  }
 
-  function handleRemoveThumbnail() {
-    setValue("thumbnail", undefined);
-    setValue("removeThumbnail", true, { shouldDirty: true });
-    setThumbnailPreview(null);
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
@@ -127,32 +112,35 @@ export function VideoForm({
             />
           </FormField>
 
-          <FormField label="Thumbnail" htmlFor="thumbnail" hint="Opsional — kosongkan untuk pakai thumbnail bawaan YouTube">
-            <div className="flex items-center gap-4">
-              {thumbnailPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={thumbnailPreview} alt="" className="h-20 w-32 rounded-xl object-cover" />
-              ) : (
-                <div className="flex h-20 w-32 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                  <ImageOff className="size-6" />
-                </div>
-              )}
-              <div className="flex flex-col gap-2">
-                <Input
-                  id="thumbnail"
-                  type="file"
-                  accept="image/*"
-                  className={inputClass}
-                  onChange={(e) => handleThumbnailChange(e.target.files?.[0])}
+          <FormField label="Thumbnail" htmlFor="thumbnail">
+            <Controller
+              name="thumbnail"
+              control={control}
+              render={({ field }) => (
+                <Controller
+                  name="removeThumbnail"
+                  control={control}
+                  render={({ field: removeField }) => (
+                    <FileUpload
+                      id="thumbnail"
+                      accept="image/*"
+                      maxSizeKb={4096}
+                      previewShape="wide"
+                      value={field.value}
+                      onChange={(file) => {
+                        field.onChange(file);
+                        if (file) removeField.onChange(false);
+                      }}
+                      existingUrl={initialData?.thumbnail_url}
+                      removed={removeField.value}
+                      onRemoveExisting={() => removeField.onChange(true)}
+                      onUndoRemove={() => removeField.onChange(false)}
+                      error={errors.thumbnail?.message}
+                    />
+                  )}
                 />
-                {thumbnailPreview && (
-                  <Button type="button" variant="ghost" size="sm" className="w-fit gap-1.5" onClick={handleRemoveThumbnail}>
-                    <X className="size-3.5" />
-                    Hapus thumbnail
-                  </Button>
-                )}
-              </div>
-            </div>
+              )}
+            />
           </FormField>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

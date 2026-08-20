@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { RiskDangerAlert } from "@/components/dashboard/risk-danger-alert";
 import {
   RiskQuestionStep,
   type QuestionAnswer,
 } from "@/components/dashboard/risk-question-step";
+import { QuestionnaireSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -70,10 +71,7 @@ export default function IsiCekRisikoPage() {
 
   if (!questionnaire) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat kuesioner...
-      </div>
+      <QuestionnaireSkeleton questions={2} label="Memuat kuesioner" />
     );
   }
 

@@ -187,6 +187,14 @@ export type FormFieldValidation = {
   max?: number;
   regex?: string;
   max_size_kb?: number;
+  /**
+   * Ekstensi yang diizinkan untuk field bertipe `file`, mis. `["pdf","jpg"]`.
+   * Backend sudah mengirimkannya sejak awal (seluruh kolom `validation`
+   * diteruskan apa adanya oleh `PublicFormFieldResource`); tipenya saja yang
+   * belum mendeklarasikannya, sehingga nilainya tidak pernah dipakai memasang
+   * `accept` di pemilih berkas responden.
+   */
+  allowed_extensions?: string[];
 };
 
 /** Pilihan (radio/checkbox/select) berupa daftar label; skala berupa rentang {min,max}. */

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { optionalFileSchema } from "@/lib/validations/file";
+
 import type { AdminTestimonial } from "@/lib/types";
 
 /** Testimoni landing page — PRD §9 F-01. */
@@ -9,7 +11,7 @@ export const testimonialSchema = z.object({
   quote: z.string().min(1, "Kutipan wajib diisi").max(500, "Maksimal 500 karakter"),
   rating: z.number().int().min(1, "Pilih minimal 1 bintang").max(5, "Maksimal 5 bintang"),
   isPublished: z.boolean(),
-  photo: z.instanceof(File).optional(),
+  photo: optionalFileSchema({ accept: "image/jpeg,image/png,image/webp", maxSizeKb: 2048 }),
   removePhoto: z.boolean(),
 });
 

@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
+import { CardSkeleton } from "@/components/shared/loading-state";
 import { RiskDisclaimer } from "@/components/shared/risk-disclaimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -81,10 +82,7 @@ export default function CekRisikoPage() {
       )}
 
       {questionnaire === undefined ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat kuesioner...
-        </div>
+        <CardSkeleton lines={3} withIcon withAction className="sm:p-6" />
       ) : questionnaire ? (
         <Card className="rounded-3xl border border-border shadow-soft">
           <CardContent className="space-y-5 px-6 py-6">

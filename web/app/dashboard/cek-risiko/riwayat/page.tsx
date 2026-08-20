@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { RiskLevelBadge } from "@/components/dashboard/risk-level-badge";
 import { RiskScoreTrendChart } from "@/components/dashboard/risk-score-trend-chart";
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
@@ -57,10 +58,7 @@ export default function RiwayatCekRisikoPage() {
       )}
 
       {history === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat riwayat...
-        </div>
+        <ListSkeleton rows={4} framed={false} withAvatar label="Memuat riwayat" />
       ) : history.length === 0 ? (
         <Card className="rounded-3xl border border-dashed border-border">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { optionalFileSchema } from "@/lib/validations/file";
+
 import type { AboutSettings, AdminTeamMember } from "@/lib/types";
 
 /** Seksi 1–5 halaman Tentang — PRD §9 F-16. */
@@ -73,7 +75,7 @@ export const teamMemberSchema = z.object({
   credential: z.string().max(150, "Maksimal 150 karakter"),
   description: z.string().max(1000, "Maksimal 1000 karakter"),
   isPublished: z.boolean(),
-  photo: z.instanceof(File).optional(),
+  photo: optionalFileSchema({ accept: "image/jpeg,image/png,image/webp", maxSizeKb: 2048 }),
   removePhoto: z.boolean(),
 });
 

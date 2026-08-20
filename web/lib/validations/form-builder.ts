@@ -21,7 +21,8 @@ export const FORM_STATUS_OPTIONS: { value: FormStatus; label: string }[] = [
 ];
 
 const CHOICE_TYPES: FormFieldType[] = ["radio", "checkbox", "select"];
-const MAX_FILE_SIZE_KB = 2048;
+/** Batas keras backend — `FormFieldRuleBuilder` memakai `min($input, 2048)`. */
+export const MAX_FILE_SIZE_KB = 2048;
 
 /**
  * Field angka dari input HTML selalu string; divalidasi sebagai string
@@ -184,7 +185,11 @@ export function toFormBuilderFormValues(form?: AdminForm): FormBuilderInput {
         validation_max: field.validation?.max != null ? String(field.validation.max) : "",
         regex: field.validation?.regex ?? "",
         max_size_kb: field.validation?.max_size_kb != null ? String(field.validation.max_size_kb) : "2048",
-        allowed_extensions: "",
+        // Sebelumnya dipaku `""`, sehingga menyunting form apa pun lalu
+        // menyimpannya diam-diam menghapus daftar ekstensi yang sudah diatur —
+        // dan sejak `accept` dipasang dari nilai ini, hilangnya berarti pemilih
+        // berkas responden kembali menerima apa saja.
+        allowed_extensions: field.validation?.allowed_extensions?.join(", ") ?? "",
       };
     }),
   };

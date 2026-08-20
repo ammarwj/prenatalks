@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { AboutSettingsForm } from "@/components/admin/about-settings-form";
 import { TeamMemberFormDialog } from "@/components/admin/team-member-form-dialog";
 import { TeamMemberItem } from "@/components/admin/team-member-item";
+import { FormSkeleton, ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -168,12 +169,7 @@ export default function TentangAdminPage() {
       )}
 
       {about === null ? (
-        !loadError && (
-          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat isi halaman...
-          </div>
-        )
+        !loadError && <FormSkeleton fields={3} withTextarea label="Memuat isi halaman" />
       ) : (
         <AboutSettingsForm initialData={about} brandColors={brandColors} />
       )}
@@ -206,10 +202,7 @@ export default function TentangAdminPage() {
         )}
 
         {team === null ? (
-          <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat profil tim...
-          </div>
+          <ListSkeleton rows={3} framed={false} withHandle withAvatar label="Memuat profil tim" />
         ) : team.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
             Belum ada profil tim. Seksi ini disembunyikan di halaman publik selama daftarnya kosong.

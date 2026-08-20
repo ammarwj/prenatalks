@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, KeyRound, Loader2 } from "lucide-react";
 
+import { ListSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -136,10 +137,7 @@ export default function NakesPage() {
         <h2 className="font-display text-base font-bold text-foreground">Pasien dengan izin aktif</h2>
 
         {patients === null ? (
-          <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat daftar pasien...
-          </div>
+          <ListSkeleton rows={3} framed={false} withAvatar label="Memuat daftar pasien" />
         ) : patients.length === 0 ? (
           <Card className="rounded-3xl border border-dashed border-border">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">

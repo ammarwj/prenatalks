@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { FullPageLoader } from "@/components/shared/loading-state";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { authLogout } from "@/lib/auth";
@@ -53,10 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isHydrating) {
     return (
-      <div className="flex min-h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat sesi...
-      </div>
+      <FullPageLoader label="Memuat sesi" />
     );
   }
 

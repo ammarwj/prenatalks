@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 import { PregnancyForm } from "@/components/dashboard/pregnancy-form";
 import { PregnancyHistoryList } from "@/components/dashboard/pregnancy-history-list";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import { useDashboardStore } from "@/lib/stores/dashboard-store";
@@ -62,10 +62,7 @@ export default function DataKehamilanPage() {
       )}
 
       {pregnancies === null ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <FormSkeleton fields={3} />
       ) : (
         <>
           <PregnancyForm

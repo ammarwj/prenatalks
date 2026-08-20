@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
-import { Loader2, RotateCcw, Upload } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
+import { FileUpload } from "@/components/shared/file-upload";
 import { Button } from "@/components/ui/button";
 import { apiDelete, apiPostForm, ApiRequestError } from "@/lib/api-client";
 import { PUBLIC_SETTINGS_TAG, revalidatePublicCache } from "@/lib/public-cache";
@@ -25,6 +26,9 @@ export function BrandAssetCard({
   title,
   description,
   requirements,
+  maxSizeKb,
+  minSide,
+  square,
   produces,
   version,
   preview,
@@ -35,13 +39,16 @@ export function BrandAssetCard({
   description: string;
   /** Format, ukuran minimum, dan batas berkas — angka yang sama dengan backend. */
   requirements: string;
+  /** Batas yang ditegakkan `BrandAssetRequest`, dicerminkan di sisi klien. */
+  maxSizeKb: number;
+  minSide: number;
+  square?: boolean;
   /** Apa yang dihasilkan dari satu unggahan ini. */
   produces: string;
   version: number | null;
   preview: ReactNode;
   onChanged: (next: BrandSettings) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const accessToken = useAuthStore((state) => state.accessToken);
   const [busy, setBusy] = useState<"upload" | "reset" | null>(null);
 
@@ -59,9 +66,6 @@ export function BrandAssetCard({
       toast.error(err instanceof ApiRequestError ? err.detail() : "Gagal mengunggah, coba lagi.");
     } finally {
       setBusy(null);
-      // Dikosongkan supaya memilih berkas yang sama dua kali tetap memicu
-      // onChange — jika tidak, percobaan ulang setelah gagal terasa mati.
-      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
@@ -105,27 +109,23 @@ export function BrandAssetCard({
         </div>
       </dl>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <input
-          ref={inputRef}
-          type="file"
+      <div className="mt-5 space-y-3">
+        {/*
+          Unggahan di sini langsung dikirim begitu berkas dipilih (tidak ada
+          tombol simpan), jadi `value` sengaja tidak dipertahankan — zona
+          kembali kosong setelah `handleFile` selesai, dan hasilnya terlihat
+          pada pratinjau kontekstual di atas.
+        */}
+        <FileUpload
+          id={`brand-${asset}`}
           accept="image/png,image/jpeg,image/webp"
-          className="sr-only"
-          onChange={(event) => handleFile(event.target.files?.[0])}
-        />
-        <Button
-          type="button"
-          onClick={() => inputRef.current?.click()}
+          maxSizeKb={maxSizeKb}
+          minSide={minSide}
+          square={square}
+          onChange={handleFile}
+          busy={busy === "upload"}
           disabled={busy !== null}
-          className="h-10 gap-1.5 rounded-full px-5"
-        >
-          {busy === "upload" ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Upload className="size-4" />
-          )}
-          {busy === "upload" ? "Mengunggah..." : version === null ? "Unggah" : "Ganti"}
-        </Button>
+        />
 
         {version !== null && (
           <Button

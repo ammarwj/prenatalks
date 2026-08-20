@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 
+import { FileUpload } from "@/components/shared/file-upload";
 import { FormField } from "@/components/shared/form-field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -23,7 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { FormBuilderFieldInput } from "@/lib/validations/form-builder";
+import { acceptFromExtensions } from "@/lib/file-upload";
+import { MAX_FILE_SIZE_KB, type FormBuilderFieldInput } from "@/lib/validations/form-builder";
 
 const inputClass = "h-11 rounded-xl";
 
@@ -102,7 +104,23 @@ function PreviewControl({
       return <DatePicker id={htmlFor} onChange={() => {}} placeholder={field.placeholder || "Pilih tanggal"} disabled />;
 
     case "file":
-      return <Input id={htmlFor} type="file" className={inputClass} disabled />;
+      // Zona yang sama dengan yang dilihat responden, dalam keadaan nonaktif —
+      // pratinjau yang menampilkan kontrol berbeda dari halaman aslinya tidak
+      // menjawab pertanyaan apa pun.
+      return (
+        <FileUpload
+          id={htmlFor}
+          // Bentuk field di builder masih datar (`allowed_extensions` sebagai
+          // teks berkoma, `max_size_kb` sebagai string) — baru diubah jadi
+          // objek `validation` saat dikirim ke API oleh `toFormBuilderPayload`.
+          accept={acceptFromExtensions(
+            field.allowed_extensions?.split(",").map((ext) => ext.trim()).filter(Boolean)
+          )}
+          maxSizeKb={Math.min(Number(field.max_size_kb) || MAX_FILE_SIZE_KB, MAX_FILE_SIZE_KB)}
+          onChange={() => {}}
+          disabled
+        />
+      );
 
     case "select":
       return (

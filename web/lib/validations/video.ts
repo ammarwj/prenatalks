@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { optionalFileSchema } from "@/lib/validations/file";
+
 import type { AdminVideo, ArticleStatus, LifeStage } from "@/lib/types";
 import { ARTICLE_STATUS_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/validations/article";
 
@@ -15,7 +17,7 @@ export const videoSchema = z.object({
     .or(z.literal("")),
   description: z.string().optional(),
   youtubeUrl: z.string().min(1, "URL YouTube wajib diisi"),
-  thumbnail: z.instanceof(File).optional(),
+  thumbnail: optionalFileSchema({ accept: "image/*", maxSizeKb: 4096 }),
   removeThumbnail: z.boolean(),
   categoryId: z.string().optional(),
   durationMinutes: z.string().optional(),

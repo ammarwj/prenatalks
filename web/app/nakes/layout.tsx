@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, Users } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
 
+import { FullPageLoader } from "@/components/shared/loading-state";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { authLogout } from "@/lib/auth";
@@ -54,10 +55,7 @@ export default function NakesLayout({ children }: { children: React.ReactNode })
 
   if (isHydrating) {
     return (
-      <div className="flex min-h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat sesi...
-      </div>
+      <FullPageLoader label="Memuat sesi" />
     );
   }
 

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { ImageOff, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { FileUpload } from "@/components/shared/file-upload";
 import { FormField } from "@/components/shared/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,6 @@ export function ArticleForm({
 }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
   const isEditing = !!initialData;
 
   const {
@@ -78,19 +78,7 @@ export function ArticleForm({
     }
   }
 
-  function handleCoverChange(file: File | undefined) {
-    setValue("cover", file, { shouldDirty: true });
-    if (file) {
-      setValue("removeCover", false);
-      setCoverPreview(URL.createObjectURL(file));
-    }
-  }
 
-  function handleRemoveCover() {
-    setValue("cover", undefined);
-    setValue("removeCover", true, { shouldDirty: true });
-    setCoverPreview(null);
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
@@ -115,32 +103,35 @@ export function ArticleForm({
             <Textarea id="excerpt" {...register("excerpt")} />
           </FormField>
 
-          <FormField label="Cover" htmlFor="cover" hint="Gambar akan dikonversi ke WebP otomatis, maks 4 MB">
-            <div className="flex items-center gap-4">
-              {coverPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverPreview} alt="" className="size-20 rounded-xl object-cover" />
-              ) : (
-                <div className="flex size-20 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                  <ImageOff className="size-6" />
-                </div>
-              )}
-              <div className="flex flex-col gap-2">
-                <Input
-                  id="cover"
-                  type="file"
-                  accept="image/*"
-                  className={inputClass}
-                  onChange={(e) => handleCoverChange(e.target.files?.[0])}
+          <FormField label="Cover" htmlFor="cover">
+            <Controller
+              name="cover"
+              control={control}
+              render={({ field }) => (
+                <Controller
+                  name="removeCover"
+                  control={control}
+                  render={({ field: removeField }) => (
+                    <FileUpload
+                      id="cover"
+                      accept="image/*"
+                      maxSizeKb={4096}
+                      previewShape="square"
+                      value={field.value}
+                      onChange={(file) => {
+                        field.onChange(file);
+                        if (file) removeField.onChange(false);
+                      }}
+                      existingUrl={initialData?.cover_url}
+                      removed={removeField.value}
+                      onRemoveExisting={() => removeField.onChange(true)}
+                      onUndoRemove={() => removeField.onChange(false)}
+                      error={errors.cover?.message}
+                    />
+                  )}
                 />
-                {coverPreview && (
-                  <Button type="button" variant="ghost" size="sm" className="w-fit gap-1.5" onClick={handleRemoveCover}>
-                    <X className="size-3.5" />
-                    Hapus cover
-                  </Button>
-                )}
-              </div>
-            </div>
+              )}
+            />
           </FormField>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

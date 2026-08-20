@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Loader2, MailWarning } from "lucide-react";
+import { ArrowRight, BadgeCheck, MailWarning } from "lucide-react";
 
 import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
 import { ProfileForm } from "@/components/dashboard/profile-form";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { apiGet } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import type { Consent } from "@/lib/types";
@@ -39,10 +40,7 @@ export default function ProfilPage() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
-        Memuat profil...
-      </div>
+      <FormSkeleton fields={4} label="Memuat profil" className="mx-auto max-w-2xl" />
     );
   }
 

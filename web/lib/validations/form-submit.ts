@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import { acceptFromExtensions, validateFile } from "@/lib/file-upload";
 import type { PublicFormField } from "@/lib/types";
+import { MAX_FILE_SIZE_KB } from "@/lib/validations/form-builder";
 
 export type AnswerValue = string | string[] | File | undefined;
 export type AnswerValues = Record<string, AnswerValue>;
@@ -110,7 +112,17 @@ function buildInnerType(field: PublicFormField): z.ZodTypeAny {
     }
 
     case "file":
-      return z.instanceof(File, { message: "Berkas tidak valid" });
+      // Batas per-field diatur admin di form builder; `min(..., MAX_FILE_SIZE_KB)`
+      // mencerminkan `FormFieldRuleBuilder` yang juga membatasi nilai admin
+      // ke 2048 KB, supaya pesan galat di sini tidak menjanjikan batas yang
+      // lebih longgar daripada yang benar-benar diterima server.
+      return z.instanceof(File, { message: "Berkas tidak valid" }).superRefine((file, ctx) => {
+        const message = validateFile(file, {
+          accept: acceptFromExtensions(field.validation?.allowed_extensions),
+          maxSizeKb: Math.min(field.validation?.max_size_kb ?? MAX_FILE_SIZE_KB, MAX_FILE_SIZE_KB),
+        });
+        if (message) ctx.addIssue({ code: "custom", message });
+      });
 
     default:
       return z.string();

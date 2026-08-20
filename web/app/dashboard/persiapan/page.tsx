@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ChecklistCustomForm } from "@/components/dashboard/checklist-custom-form";
 import { ChecklistGroupCard } from "@/components/dashboard/checklist-group-card";
 import { CircularProgress } from "@/components/shared/circular-progress";
+import { CardGridSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiDelete, apiGet, apiPatch, apiPost, ApiRequestError } from "@/lib/api-client";
 import { applyChecklistToggle, checklistItemKey } from "@/lib/checklist";
 import type { ChecklistItem, ChecklistOverview } from "@/lib/types";
@@ -135,9 +136,16 @@ export default function PersiapanPage() {
 
       {overview === null ? (
         !loadError && (
-          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Memuat checklist...
+          <div className="space-y-6">
+            <section className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-primary-soft p-6 sm:flex-row">
+              <Skeleton className="size-32 shrink-0 rounded-full bg-primary/15" />
+              <div className="w-full space-y-2.5">
+                <Skeleton className="h-5 w-48 rounded-lg bg-primary/15" />
+                <Skeleton className="h-3.5 w-3/5 rounded-full bg-primary/15" />
+                <Skeleton className="h-3.5 w-4/5 rounded-full bg-primary/15" />
+              </div>
+            </section>
+            <CardGridSkeleton count={3} columns={1} lines={3} withIcon label="Memuat checklist" />
           </div>
         )
       ) : (

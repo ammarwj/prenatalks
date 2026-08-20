@@ -2,10 +2,10 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ArticleForm } from "@/components/admin/article-form";
+import { FormSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
 import type { AdminArticle } from "@/lib/types";
@@ -68,10 +68,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
       )}
 
       {article === null && !loadError ? (
-        <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat data...
-        </div>
+        <FormSkeleton fields={4} withTextarea />
       ) : article ? (
         <ArticleForm key={article.updated_at} initialData={article} onSaved={handleSaved} />
       ) : null}
