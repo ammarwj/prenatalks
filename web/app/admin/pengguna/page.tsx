@@ -43,10 +43,13 @@ const SORTABLE_COLUMNS: { key: SortKey; label: string }[] = [
 function formatDate(value: string | null): string {
   if (!value) return "—";
 
-  return new Date(value).toLocaleDateString("id-ID", {
+  return new Date(value).toLocaleString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 }
 
