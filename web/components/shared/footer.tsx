@@ -3,13 +3,9 @@ import { Mail, MapPin, Phone } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
 import { RISK_DISCLAIMER_TEXT } from "@/components/shared/risk-disclaimer";
-import {
-  FacebookIcon,
-  InstagramIcon,
-  TiktokIcon,
-  YoutubeIcon,
-} from "@/components/shared/social-icons";
+import { SocialLinks } from "@/components/shared/social-links";
 import { apiServerGet } from "@/lib/api-server";
+import { telHref } from "@/lib/contact";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { PUBLIC_SETTINGS_TAG } from "@/lib/public-cache";
 import type { ContactSettings, SocialSettings } from "@/lib/types";
@@ -24,22 +20,9 @@ const ABOUT_LINKS = [
 const HELP_LINKS = [
   { label: "FAQ", href: "/faq" },
   { label: "Komunitas", href: "/komunitas" },
-  { label: "Panduan Penggunaan", href: "#" },
-  { label: "Hubungi Kami", href: "#kontak" },
+  { label: "Panduan Penggunaan", href: "/panduan" },
+  { label: "Hubungi Kami", href: "/kontak" },
 ];
-
-/**
- * Ikon tiap platform tetap di kode — komponen SVG tidak bisa disimpan di
- * database. Yang datang dari `settings` hanya URL-nya, dan platform yang
- * URL-nya kosong tidak dirender sama sekali (sebelumnya keempatnya dirender
- * sebagai tautan mati `href="#"`).
- */
-const SOCIALS = [
-  { key: "social_instagram_url", label: "Instagram", Icon: InstagramIcon },
-  { key: "social_facebook_url", label: "Facebook", Icon: FacebookIcon },
-  { key: "social_youtube_url", label: "YouTube", Icon: YoutubeIcon },
-  { key: "social_tiktok_url", label: "TikTok", Icon: TiktokIcon },
-] as const;
 
 type FooterSettings = ContactSettings & SocialSettings;
 
@@ -65,11 +48,6 @@ export async function Footer() {
   const email = settings?.contact_email ?? null;
   const address = settings?.contact_address ?? null;
 
-  const socials = SOCIALS.flatMap(({ key, label, Icon }) => {
-    const href = settings?.[key];
-    return href ? [{ label, Icon, href }] : [];
-  });
-
   return (
     <footer className="bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
@@ -78,22 +56,7 @@ export async function Footer() {
           <p className="text-sm text-muted-foreground max-w-xs">
             Teman Ibu Hamil untuk Persalinan Aman
           </p>
-          {socials.length > 0 && (
-            <div className="flex items-center gap-3 pt-1">
-              {socials.map(({ label, Icon, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-brand-purple-soft hover:text-brand-purple"
-                >
-                  <Icon className="size-4" />
-                </a>
-              ))}
-            </div>
-          )}
+          <SocialLinks settings={settings} className="pt-1" />
         </div>
 
         <div>
@@ -132,7 +95,7 @@ export async function Footer() {
           </ul>
         </div>
 
-        <div id="kontak">
+        <div>
           <h3 className="font-display text-sm font-bold text-foreground mb-4">
             Bantuan
           </h3>
@@ -159,7 +122,7 @@ export async function Footer() {
                     <Phone className="size-4 text-brand-purple shrink-0" />
                     {/* Nomor dan email jadi tautan yang bisa langsung dipakai
                         dari ponsel — sebelumnya keduanya teks polos. */}
-                    <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="hover:text-primary-text transition-colors">
+                    <a href={telHref(phone)} className="hover:text-primary-text transition-colors">
                       {phone}
                     </a>
                   </li>

@@ -15,6 +15,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/kalkulator`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/video`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/faq`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/panduan`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/kontak`, changeFrequency: "yearly", priority: 0.4 },
     { url: `${SITE_URL}/tentang`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/komunitas`, changeFrequency: "monthly", priority: 0.5 },
     // Dokumen legal jarang berubah dan bukan halaman pencarian, tapi tetap

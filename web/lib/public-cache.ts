@@ -23,11 +23,15 @@ export const STATS_TAG = "stats";
 /** `GET /legal-documents/{slug}` — Syarat & Ketentuan dan Kebijakan Privasi. */
 export const LEGAL_DOCUMENTS_TAG = "legal-documents";
 
+/** `GET /guides` — panduan penggunaan di `/panduan`. */
+export const GUIDES_TAG = "guides";
+
 export type PublicCacheTag =
   | typeof PUBLIC_SETTINGS_TAG
   | typeof TESTIMONIALS_TAG
   | typeof STATS_TAG
-  | typeof LEGAL_DOCUMENTS_TAG;
+  | typeof LEGAL_DOCUMENTS_TAG
+  | typeof GUIDES_TAG;
 
 /**
  * Minta halaman publik memuat ulang data yang baru saja disunting. Dipanggil

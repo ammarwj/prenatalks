@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardContr
 use App\Http\Controllers\Api\V1\Admin\FaqController as AdminFaqController;
 use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
+use App\Http\Controllers\Api\V1\Admin\GuideController as AdminGuideController;
 use App\Http\Controllers\Api\V1\Admin\LegalDocumentController as AdminLegalDocumentController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Api\V1\ConsentController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\FormController;
+use App\Http\Controllers\Api\V1\GuideController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\HealthWorkerAccessController;
 use App\Http\Controllers\Api\V1\LegalDocumentController;
@@ -49,6 +51,9 @@ Route::get('/articles/{slug}', [ArticleController::class, 'show']);
 Route::get('/videos', [VideoController::class, 'index']);
 Route::get('/videos/{slug}', [VideoController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
+
+// Panduan penggunaan situs (halaman `/panduan`, ditautkan dari footer).
+Route::get('/guides', [GuideController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
 
 // Syarat & Ketentuan dan Kebijakan Privasi (PRD §12.3). Segmen {slug} dibatasi
@@ -141,6 +146,17 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/legal-documents', [AdminLegalDocumentController::class, 'index']);
         Route::get('/legal-documents/{legalDocument}', [AdminLegalDocumentController::class, 'show']);
         Route::put('/legal-documents/{legalDocument}', [AdminLegalDocumentController::class, 'update']);
+
+        // Panduan penggunaan (PRD §13 mitigasi "admin non-teknis"). Sekelompok
+        // dengan dokumen legal karena keduanya teks resmi situs yang ditautkan
+        // dari footer setiap halaman — bedanya himpunannya di sini terbuka,
+        // jadi apiResource lengkap dengan reorder.
+        //
+        // "reorder" didaftarkan sebelum apiResource dengan alasan yang sama
+        // seperti FAQ di bawah: {guide} adalah wildcard yang akan mencoba
+        // mengikat "reorder" sebagai ID bila urutannya terbalik.
+        Route::patch('/guides/reorder', [AdminGuideController::class, 'reorder']);
+        Route::apiResource('guides', AdminGuideController::class);
     });
 
     Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {

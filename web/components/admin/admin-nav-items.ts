@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   CheckSquare,
   ClipboardList,
   FileClock,
@@ -62,6 +63,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { href: "/admin/tentang", label: "Halaman Tentang", icon: Info },
       { href: "/admin/testimoni", label: "Testimoni", icon: Quote },
       { href: "/admin/brand", label: "Identitas Situs", icon: ImageIcon, superAdminOnly: true },
+      { href: "/admin/panduan", label: "Panduan Penggunaan", icon: BookOpen, superAdminOnly: true },
       { href: "/admin/legal", label: "Halaman Legal", icon: ScrollText, superAdminOnly: true },
       { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
     ],

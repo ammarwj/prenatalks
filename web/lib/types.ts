@@ -690,6 +690,29 @@ export type AdminLegalDocument = LegalDocument & {
   created_at: string;
 };
 
+/**
+ * Panduan penggunaan situs — halaman `/panduan`, ditautkan dari blok
+ * "Bantuan" di footer.
+ *
+ * Tidak ada nomor langkah di sini: nomornya dihitung dari posisi dalam daftar
+ * yang sudah terurut `order_index`, supaya menghapus satu langkah tidak
+ * meninggalkan lubang di penomoran halaman publik.
+ */
+export type Guide = {
+  id: number;
+  title: string;
+  summary: string | null;
+  /** HTML dari TipTap — wajib lewat `sanitizeRichTextHtml()` sebelum dirender. */
+  body: string;
+};
+
+export type AdminGuide = Guide & {
+  order_index: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 /** PRD §9 F-01 — testimoni di landing page. */
 export type Testimonial = {
   id: number;

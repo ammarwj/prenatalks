@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 
 import { API_URL } from "@/lib/server/auth-cookie";
 import {
+  GUIDES_TAG,
   LEGAL_DOCUMENTS_TAG,
   PUBLIC_SETTINGS_TAG,
   STATS_TAG,
@@ -30,6 +31,7 @@ const ALLOWED_ROLES: Record<PublicCacheTag, string[]> = {
   [STATS_TAG]: ["super_admin"],
   [TESTIMONIALS_TAG]: ["admin", "super_admin"],
   [LEGAL_DOCUMENTS_TAG]: ["super_admin"],
+  [GUIDES_TAG]: ["super_admin"],
 };
 
 function isKnownTag(tag: unknown): tag is PublicCacheTag {

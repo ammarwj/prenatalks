@@ -32,6 +32,7 @@ class AuditLog extends Model
         'ChecklistItem' => 'Item Checklist',
         'Setting' => 'Pengaturan',
         'LegalDocument' => 'Halaman Legal',
+        'Guide' => 'Panduan Penggunaan',
         'TeamMember' => 'Profil Tim',
         'Testimonial' => 'Testimoni',
         'User' => 'Pengguna',

@@ -86,7 +86,7 @@ export async function LegalDocumentPage({
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Ada pertanyaan?{" "}
-          <Link href="/#kontak" className="font-semibold text-primary-text hover:underline">
+          <Link href="/kontak" className="font-semibold text-primary-text hover:underline">
             Hubungi kami
           </Link>
         </p>
