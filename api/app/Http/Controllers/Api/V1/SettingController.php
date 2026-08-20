@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\BrandAssetService;
 use App\Traits\ApiResponse;
 
 /**
@@ -19,10 +20,18 @@ class SettingController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(private readonly BrandAssetService $brand) {}
+
     public function index()
     {
         return $this->success(
-            Setting::valuesForGroups(Setting::PUBLIC_GROUPS),
+            // Nilai kelompok `brand` yang tersimpan hanya path + versi;
+            // `payload()` menggantinya dengan URL absolut ber-`?v=` supaya
+            // frontend tidak perlu tahu cara menyusun URL storage sendiri.
+            array_replace(
+                Setting::valuesForGroups(Setting::PUBLIC_GROUPS),
+                $this->brand->payload()
+            ),
             // Warna merek dikunci di kode (PRD §1.4), tapi tetap dikirim dari
             // sini supaya halaman Tentang tidak menulis ulang kode hex-nya
             // sebagai literal kedua yang bisa menyimpang.

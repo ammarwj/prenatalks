@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Api\V1\Admin\AuditLogController as AdminAuditLogController;
+use App\Http\Controllers\Api\V1\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Api\V1\Admin\ChecklistItemController as AdminChecklistItemController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\FaqController as AdminFaqController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Api\V1\QuestionnaireController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\TeamMemberController;
 use App\Http\Controllers\Api\V1\VideoController;
+use App\Services\BrandAssetService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -104,6 +106,14 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
         Route::apiResource('users', AdminUserController::class)->only(['index', 'show', 'update']);
+
+        // Identitas situs (PRD §1.4). Segmen {asset} dibatasi di sini supaya
+        // nilai di luar daftar berhenti sebagai 404 rute, bukan merambat
+        // sampai ke service dan berakhir 500.
+        Route::post('/brand/{asset}', [AdminBrandController::class, 'store'])
+            ->whereIn('asset', BrandAssetService::ASSETS);
+        Route::delete('/brand/{asset}', [AdminBrandController::class, 'destroy'])
+            ->whereIn('asset', BrandAssetService::ASSETS);
     });
 
     Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {

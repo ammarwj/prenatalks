@@ -567,7 +567,42 @@ export type AboutSettings = {
 /** Warna merek dikunci di backend (PRD §1.4), dikirim lewat `meta`. */
 export type BrandColors = { purple: string; teal: string };
 
-export type PublicSettings = CommunitySettings & AboutSettings;
+/**
+ * Aset identitas situs (PRD §1.4) — diunggah super admin lewat
+ * `/admin/brand`. Backend menyusun `url` lengkap dengan `?v=`; nomor versi
+ * naik tiap penggantian sehingga cache lama pasti meleset.
+ *
+ * `null` berarti belum ada unggahan — pemakainya jatuh ke aset statis bawaan.
+ */
+export type BrandImageAsset = {
+  version: number;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
+export type BrandFaviconAsset = {
+  version: number;
+  url: string;
+  /** PNG 180×180 untuk ikon layar utama iOS. */
+  apple_touch_url: string;
+};
+
+export type BrandHeroAsset = BrandImageAsset & {
+  /** JPEG 1200×630 untuk pratinjau tautan (og:image). */
+  og_url: string;
+};
+
+export type BrandSettings = {
+  brand_logo: BrandImageAsset | null;
+  brand_favicon: BrandFaviconAsset | null;
+  brand_hero: BrandHeroAsset | null;
+};
+
+/** Aset merek yang bisa diganti — sejajar dengan `BrandAssetService::ASSETS`. */
+export type BrandAssetName = "logo" | "favicon" | "hero";
+
+export type PublicSettings = CommunitySettings & AboutSettings & BrandSettings;
 
 /** PRD §9 F-16 seksi 6 — profil tim. */
 export type TeamMember = {

@@ -3,6 +3,7 @@ import {
   ClipboardList,
   FileClock,
   HelpCircle,
+  Image as ImageIcon,
   Info,
   LayoutDashboard,
   ListChecks,
@@ -57,6 +58,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     title: "Situs",
     items: [
       { href: "/admin/tentang", label: "Halaman Tentang", icon: Info },
+      { href: "/admin/brand", label: "Identitas Situs", icon: ImageIcon, superAdminOnly: true },
       { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
     ],
   },

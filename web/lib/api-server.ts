@@ -15,10 +15,16 @@ type ApiSuccess<T> = {
  */
 export async function apiServerGet<T>(
   path: string,
-  revalidate: number | false = 300
+  revalidate: number | false = 300,
+  /**
+   * Tag cache opsional, supaya panel admin bisa membatalkan cache-nya lebih
+   * cepat daripada menunggu `revalidate` habis — lihat
+   * `app/api/revalidate-brand/route.ts`.
+   */
+  tags?: string[]
 ): Promise<{ data: T | null; meta?: Record<string, unknown>; status: number }> {
   const response = await fetch(`${API_URL}${path}`, {
-    next: revalidate === false ? undefined : { revalidate },
+    next: revalidate === false ? (tags ? { tags } : undefined) : { revalidate, tags },
   });
 
   if (!response.ok) {

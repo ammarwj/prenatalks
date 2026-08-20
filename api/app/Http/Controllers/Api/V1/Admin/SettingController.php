@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminSettingsRequest;
 use App\Models\Setting;
+use App\Services\BrandAssetService;
 use App\Traits\ApiResponse;
 
 /**
@@ -17,12 +18,12 @@ class SettingController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(private readonly BrandAssetService $brand) {}
+
     public function index()
     {
-        $groups = array_values(array_unique(array_values(Setting::KEYS)));
-
         return $this->success(
-            Setting::valuesForGroups($groups),
+            $this->allValues(),
             meta: ['public_groups' => Setting::PUBLIC_GROUPS]
         );
     }
@@ -31,8 +32,20 @@ class SettingController extends Controller
     {
         Setting::putMany($request->validated());
 
+        return $this->success($this->allValues(), 'Pengaturan disimpan');
+    }
+
+    /**
+     * Seluruh kelompok, dengan aset merek sudah berbentuk URL siap pakai —
+     * berkasnya sendiri diunggah lewat `POST /admin/brand/{asset}`, bukan
+     * dari sini, tapi panel tetap membacanya dari satu tempat yang sama.
+     *
+     * @return array<string, mixed>
+     */
+    private function allValues(): array
+    {
         $groups = array_values(array_unique(array_values(Setting::KEYS)));
 
-        return $this->success(Setting::valuesForGroups($groups), 'Pengaturan disimpan');
+        return array_replace(Setting::valuesForGroups($groups), $this->brand->payload());
     }
 }

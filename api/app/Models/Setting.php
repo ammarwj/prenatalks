@@ -44,15 +44,26 @@ class Setting extends Model
         'about_logo_philosophy' => 'about',
         'about_color_purple_meaning' => 'about',
         'about_color_teal_meaning' => 'about',
+
+        // Aset identitas situs. Yang tersimpan hanya `{path, version, …}`;
+        // URL-nya dibangun saat dibaca oleh `BrandAssetService::payload()`
+        // karena APP_URL berbeda antar environment. Berkasnya sendiri
+        // diunggah lewat `POST /admin/brand/{asset}`, bukan `PUT /admin/settings`.
+        'brand_logo' => 'brand',
+        'brand_favicon' => 'brand',
+        'brand_hero' => 'brand',
     ];
 
     /**
      * Kelompok yang boleh dibaca tanpa login lewat `GET /settings`.
      * Kelompok baru tidak otomatis publik — harus didaftarkan di sini.
      *
+     * `brand` ikut publik karena logo dan favicon dipasang di setiap
+     * halaman, termasuk yang tidak menuntut sesi.
+     *
      * @var list<string>
      */
-    public const PUBLIC_GROUPS = ['community', 'about'];
+    public const PUBLIC_GROUPS = ['community', 'about', 'brand'];
 
     /**
      * Kode warna merek sengaja **tidak** disimpan di `settings`: PRD §1.4
@@ -125,6 +136,13 @@ class Setting extends Model
                 .'penanda kredibilitas: badge sumber ilmiah, ikon keamanan, dan profil tenaga kesehatan.',
             'about_color_teal_meaning' => 'Kehidupan, pertumbuhan, keseimbangan, dan keharmonisan. Toska menandai '
                 .'kondisi sehat, aman, dan hal-hal yang sudah Anda selesaikan.',
+
+            // Belum ada unggahan — frontend jatuh ke aset statis bawaannya
+            // (`web/public/brand/logo.png`, `web/public/favicon.ico`, dan
+            // ilustrasi lingkaran di hero).
+            'brand_logo' => null,
+            'brand_favicon' => null,
+            'brand_hero' => null,
         ];
     }
 

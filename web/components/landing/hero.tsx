@@ -1,10 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Phone, Rocket, ShieldCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useBrand } from "@/components/shared/brand-provider";
 import { Reveal } from "@/components/shared/reveal";
+import type { BrandHeroAsset } from "@/lib/types";
 
 const FLOATING_CARDS: {
   icon: LucideIcon;
@@ -64,28 +68,50 @@ function FloatingCard({
 }
 
 /**
- * Ilustrasi lingkaran bertema logo — placeholder untuk foto hero asli.
- * Belum ada aset foto (lihat PRD, Pertanyaan Terbuka #5); ganti dengan
- * <Image src="/hero/ibu-hamil.jpg" .../> begitu foto tersedia.
+ * Lingkaran hero. Isinya foto yang diunggah super admin lewat
+ * `/admin/brand`; selama belum ada, logo yang mengisi lingkaran seperti
+ * sebelumnya.
+ *
+ * Foto dipasang sebagai isi lingkaran (`object-cover` di dalam `inset-8`
+ * yang sama), bukan menggantikan seluruh visual: gradien, cincin putih, dan
+ * ketiga kartu mengambang adalah bentuk yang menggemakan logo PrenaTalks —
+ * membuangnya demi kotak berfoto akan membuat hero terlihat seperti hero
+ * mana pun.
  */
-function HeroVisual() {
+function HeroVisual({ photo }: { photo: BrandHeroAsset | null }) {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[420px]">
       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-soft via-white to-brand-purple-soft blur-2xl" />
       <div className="absolute inset-8 rounded-full bg-white/60 shadow-soft ring-1 ring-white" />
-      <Image
-        src="/brand/logo.png"
-        alt="PrenaTalks — ibu, ayah, dan anak dalam satu lingkaran"
-        fill
-        sizes="(min-width: 1024px) 420px, 80vw"
-        className="object-contain p-16 drop-shadow-xl"
-        priority
-      />
+
+      {photo ? (
+        <div className="absolute inset-8 overflow-hidden rounded-full shadow-soft ring-1 ring-white">
+          <Image
+            src={photo.url}
+            alt="Ibu hamil bersama pendampingnya"
+            fill
+            sizes="(min-width: 1024px) 356px, 68vw"
+            className="object-cover"
+            priority
+          />
+        </div>
+      ) : (
+        <Image
+          src="/brand/logo.png"
+          alt="PrenaTalks — ibu, ayah, dan anak dalam satu lingkaran"
+          fill
+          sizes="(min-width: 1024px) 420px, 80vw"
+          className="object-contain p-16 drop-shadow-xl"
+          priority
+        />
+      )}
     </div>
   );
 }
 
 export function Hero() {
+  const { brand_hero: heroPhoto } = useBrand();
+
   return (
     <section
       id="beranda"
@@ -139,7 +165,7 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={0.1} className="relative">
-          <HeroVisual />
+          <HeroVisual photo={heroPhoto} />
 
           {/* Kartu mengambang — desktop */}
           <div className="hidden md:block">
