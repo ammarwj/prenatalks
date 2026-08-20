@@ -5,7 +5,7 @@ import "./globals.css";
 import { BrandProvider } from "@/components/shared/brand-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { apiServerGet } from "@/lib/api-server";
-import { BRAND_CACHE_TAG } from "@/lib/brand-cache";
+import { PUBLIC_SETTINGS_TAG } from "@/lib/public-cache";
 import type { BrandSettings } from "@/lib/types";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -43,7 +43,7 @@ const EMPTY_BRAND: BrandSettings = {
  */
 async function getBrand(): Promise<BrandSettings> {
   try {
-    const { data } = await apiServerGet<BrandSettings>("/settings", 300, [BRAND_CACHE_TAG]);
+    const { data } = await apiServerGet<BrandSettings>("/settings", 300, [PUBLIC_SETTINGS_TAG]);
 
     return {
       brand_logo: data?.brand_logo ?? null,

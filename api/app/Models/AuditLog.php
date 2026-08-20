@@ -32,6 +32,7 @@ class AuditLog extends Model
         'ChecklistItem' => 'Item Checklist',
         'Setting' => 'Pengaturan',
         'TeamMember' => 'Profil Tim',
+        'Testimonial' => 'Testimoni',
         'User' => 'Pengguna',
         'HealthWorkerConsent' => 'Izin Tenaga Kesehatan',
         'HealthWorkerNote' => 'Catatan Tenaga Kesehatan',

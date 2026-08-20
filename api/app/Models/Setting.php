@@ -52,6 +52,28 @@ class Setting extends Model
         'brand_logo' => 'brand',
         'brand_favicon' => 'brand',
         'brand_hero' => 'brand',
+
+        // Kontak & sosial media di footer (PRD §9 F-01). Sebelumnya ditulis
+        // mati di `web/components/shared/footer.tsx` — keempat tautan sosial
+        // bahkan masih berupa `#`, jadi tidak ada cara mengisinya selain
+        // deploy ulang.
+        'contact_phone' => 'contact',
+        'contact_email' => 'contact',
+        'contact_address' => 'contact',
+
+        'social_instagram_url' => 'social',
+        'social_facebook_url' => 'social',
+        'social_youtube_url' => 'social',
+        'social_tiktok_url' => 'social',
+
+        // Statistik landing page. Angkanya dihitung `PublicStatsService` dari
+        // database, jadi yang bisa disunting hanya label tiap kartu dan
+        // sakelar tampil/sembunyi — bukan angkanya.
+        'stats_enabled' => 'stats',
+        'stats_label_mothers' => 'stats',
+        'stats_label_contents' => 'stats',
+        'stats_label_assessments' => 'stats',
+        'stats_label_health_workers' => 'stats',
     ];
 
     /**
@@ -59,11 +81,26 @@ class Setting extends Model
      * Kelompok baru tidak otomatis publik — harus didaftarkan di sini.
      *
      * `brand` ikut publik karena logo dan favicon dipasang di setiap
-     * halaman, termasuk yang tidak menuntut sesi.
+     * halaman, termasuk yang tidak menuntut sesi. `contact`, `social`, dan
+     * `stats` ikut karena footer dan landing page dibaca tanpa login.
      *
      * @var list<string>
      */
-    public const PUBLIC_GROUPS = ['community', 'about', 'brand'];
+    public const PUBLIC_GROUPS = ['community', 'about', 'brand', 'contact', 'social', 'stats'];
+
+    /**
+     * Kelompok yang hanya boleh **ditulis** super_admin.
+     *
+     * Rute `PUT /admin/settings` sengaja terbuka untuk peran `admin` juga —
+     * teks komunitas dan halaman Tentang memang tugas admin konten. Karena
+     * satu rute melayani semua kelompok, pembatasan yang lebih ketat harus
+     * ditegakkan di tingkat kunci; lihat `AdminSettingsRequest::authorize()`.
+     * Menyembunyikan formnya di sidebar saja tidak menghalangi siapa pun yang
+     * memanggil endpoint-nya langsung.
+     *
+     * @var list<string>
+     */
+    public const SUPER_ADMIN_GROUPS = ['contact', 'social', 'stats'];
 
     /**
      * Kode warna merek sengaja **tidak** disimpan di `settings`: PRD §1.4
@@ -143,6 +180,32 @@ class Setting extends Model
             'brand_logo' => null,
             'brand_favicon' => null,
             'brand_hero' => null,
+
+            // Nilai yang selama ini tampil di footer, dipindahkan apa adanya
+            // supaya tidak ada perubahan tampilan saat fitur ini dirilis.
+            // Nomor teleponnya placeholder dari mockup dan memang perlu
+            // diganti admin lewat `/admin/pengaturan`.
+            'contact_phone' => '0812-3456-7890',
+            'contact_email' => 'halo@prenatalks.id',
+            'contact_address' => 'Gresik, Jawa Timur',
+
+            // Belum pernah diisi (keempatnya `#` di kode lama). Ikon yang
+            // tautannya kosong tidak dirender, bukan dirender sebagai tautan
+            // mati seperti sebelumnya.
+            'social_instagram_url' => null,
+            'social_facebook_url' => null,
+            'social_youtube_url' => null,
+            'social_tiktok_url' => null,
+
+            // Label kartu statistik. Yang pertama sengaja "terdaftar", bukan
+            // "terbantu" seperti teks lama: angkanya menghitung akun yang
+            // mendaftar, sedangkan "terbantu" klaim dampak yang tidak diukur
+            // query mana pun. Admin tetap bebas mengubahnya.
+            'stats_enabled' => true,
+            'stats_label_mothers' => 'Ibu hamil terdaftar',
+            'stats_label_contents' => 'Artikel & video edukasi',
+            'stats_label_assessments' => 'Cek risiko diselesaikan',
+            'stats_label_health_workers' => 'Bidan & tenaga kesehatan',
         ];
     }
 

@@ -5,26 +5,42 @@ import Link from "next/link";
 import { ExternalLink, FileClock, Loader2 } from "lucide-react";
 
 import { CommunitySettingsForm } from "@/components/admin/community-settings-form";
-import { useSuperAdminGuard } from "@/components/admin/super-admin-guard";
+import { ContactSettingsForm } from "@/components/admin/contact-settings-form";
+import { SocialSettingsForm } from "@/components/admin/social-settings-form";
+import { StatsSettingsForm } from "@/components/admin/stats-settings-form";
+import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiGet, ApiRequestError } from "@/lib/api-client";
-import type { CommunitySettings } from "@/lib/types";
+import type {
+  CommunitySettings,
+  ContactSettings,
+  SocialSettings,
+  StatsSettings,
+} from "@/lib/types";
+
+/**
+ * Satu panggilan `GET /admin/settings` mengembalikan seluruh kelompok, jadi
+ * halaman ini memuat semuanya sekaligus alih-alih satu request per form.
+ */
+type AllSettings = CommunitySettings & ContactSettings & SocialSettings & StatsSettings;
 
 /**
  * Pengaturan situs — PRD §8 (`/admin/pengaturan`).
  *
- * Saat ini hanya memuat pengaturan komunitas (F-12). Pengaturan situs lain
- * dan audit log menyusul di F-14.
+ * Komunitas (F-12) terbuka untuk admin konten; kontak, sosial media, dan
+ * statistik landing page (F-01) dikunci super_admin. Pembatasan itu ditegakkan
+ * backend lewat `Setting::SUPER_ADMIN_GROUPS` — yang di sini hanya menjelaskan
+ * alasannya kepada admin biasa alih-alih memunculkan form yang pasti ditolak.
  */
 export default function PengaturanAdminPage() {
   const { isSuperAdmin } = useSuperAdminGuard();
-  const [settings, setSettings] = useState<CommunitySettings | null>(null);
+  const [settings, setSettings] = useState<AllSettings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoadError(null);
     try {
-      setSettings(await apiGet<CommunitySettings>("/admin/settings"));
+      setSettings(await apiGet<AllSettings>("/admin/settings"));
     } catch (err) {
       setLoadError(err instanceof ApiRequestError ? err.message : "Gagal memuat pengaturan.");
     }
@@ -41,8 +57,8 @@ export default function PengaturanAdminPage() {
         <div>
           <h1 className="font-display text-2xl font-extrabold text-foreground">Pengaturan</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Teks dan tautan halaman komunitas. Perubahan tampil di halaman publik dalam beberapa
-            menit — halaman itu di-cache untuk menghemat beban server.
+            Teks & tautan komunitas, kontak dan sosial media di footer, serta keterangan kartu
+            statistik landing page.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -84,7 +100,19 @@ export default function PengaturanAdminPage() {
           </div>
         )
       ) : (
-        <CommunitySettingsForm initialData={settings} />
+        <div className="space-y-6">
+          <CommunitySettingsForm initialData={settings} />
+
+          {isSuperAdmin ? (
+            <>
+              <ContactSettingsForm initialData={settings} />
+              <SocialSettingsForm initialData={settings} />
+              <StatsSettingsForm initialData={settings} />
+            </>
+          ) : (
+            <SuperAdminRestricted description="Kontak, sosial media, dan statistik landing page hanya bisa diubah oleh peran Super Admin — ketiganya adalah identitas resmi situs. Hubungi Super Admin bila perlu diperbarui." />
+          )}
+        </div>
       )}
     </div>
   );

@@ -19,7 +19,7 @@ export async function apiServerGet<T>(
   /**
    * Tag cache opsional, supaya panel admin bisa membatalkan cache-nya lebih
    * cepat daripada menunggu `revalidate` habis — lihat
-   * `app/api/revalidate-brand/route.ts`.
+   * `app/api/revalidate-public/route.ts`.
    */
   tags?: string[]
 ): Promise<{ data: T | null; meta?: Record<string, unknown>; status: number }> {

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { apiDelete, apiPostForm, ApiRequestError } from "@/lib/api-client";
-import { revalidateBrandCache } from "@/lib/brand-cache";
+import { PUBLIC_SETTINGS_TAG, revalidatePublicCache } from "@/lib/public-cache";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import type { BrandAssetName, BrandSettings } from "@/lib/types";
 
@@ -53,7 +53,7 @@ export function BrandAssetCard({
       const formData = new FormData();
       formData.append("file", file);
       onChanged(await apiPostForm<BrandSettings>(`/admin/brand/${asset}`, formData));
-      await revalidateBrandCache(accessToken);
+      await revalidatePublicCache([PUBLIC_SETTINGS_TAG], accessToken);
       toast.success(`${title} diperbarui.`);
     } catch (err) {
       toast.error(err instanceof ApiRequestError ? err.detail() : "Gagal mengunggah, coba lagi.");
@@ -69,7 +69,7 @@ export function BrandAssetCard({
     setBusy("reset");
     try {
       onChanged(await apiDelete<BrandSettings>(`/admin/brand/${asset}`));
-      await revalidateBrandCache(accessToken);
+      await revalidatePublicCache([PUBLIC_SETTINGS_TAG], accessToken);
       toast.success(`${title} kembali ke bawaan.`);
     } catch (err) {
       toast.error(err instanceof ApiRequestError ? err.detail() : "Gagal mengembalikan, coba lagi.");

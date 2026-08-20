@@ -602,7 +602,78 @@ export type BrandSettings = {
 /** Aset merek yang bisa diganti — sejajar dengan `BrandAssetService::ASSETS`. */
 export type BrandAssetName = "logo" | "favicon" | "hero";
 
-export type PublicSettings = CommunitySettings & AboutSettings & BrandSettings;
+/** PRD §9 F-01 — kontak di footer, dari tabel `settings`. */
+export type ContactSettings = {
+  contact_phone: string | null;
+  contact_email: string | null;
+  contact_address: string | null;
+};
+
+/** PRD §9 F-01 — tautan sosial media di footer. Ikonnya tetap di kode. */
+export type SocialSettings = {
+  social_instagram_url: string | null;
+  social_facebook_url: string | null;
+  social_youtube_url: string | null;
+  social_tiktok_url: string | null;
+};
+
+/**
+ * PRD §9 F-01 — hanya label & sakelar tampil. Angkanya dihitung backend dari
+ * database dan dibaca lewat `GET /stats`, bukan dari sini.
+ */
+export type StatsSettings = {
+  stats_enabled: boolean;
+  stats_label_mothers: string;
+  stats_label_contents: string;
+  stats_label_assessments: string;
+  stats_label_health_workers: string;
+};
+
+export type PublicSettings = CommunitySettings &
+  AboutSettings &
+  BrandSettings &
+  ContactSettings &
+  SocialSettings &
+  StatsSettings;
+
+/**
+ * PRD §9 F-01 — angka statistik landing page (`GET /stats`).
+ *
+ * `value` angka asli, `display` versi yang dibulatkan **ke bawah** untuk
+ * ditampilkan ("1.000+" untuk 1.024). Landing page memakai `display`; form
+ * pengaturan menampilkan keduanya supaya admin tahu label yang ditulisnya
+ * didukung angka berapa.
+ */
+export type StatKey = "mothers" | "contents" | "assessments" | "health_workers";
+
+export type StatItem = {
+  key: StatKey;
+  value: number;
+  display: string;
+  label: string;
+};
+
+export type PublicStats = {
+  enabled: boolean;
+  items: StatItem[];
+};
+
+/** PRD §9 F-01 — testimoni di landing page. */
+export type Testimonial = {
+  id: number;
+  name: string;
+  pregnancy_age: string;
+  quote: string;
+  rating: number;
+  photo_url: string | null;
+};
+
+export type AdminTestimonial = Testimonial & {
+  order_index: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 /** PRD §9 F-16 seksi 6 — profil tim. */
 export type TeamMember = {

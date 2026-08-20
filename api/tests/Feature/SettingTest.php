@@ -100,4 +100,44 @@ class SettingTest extends TestCase
         $this->assertSame(1, Setting::where('key', 'community_heading')->count());
         $this->assertSame('Versi dua', Setting::where('key', 'community_heading')->value('value'));
     }
+
+    /**
+     * Footer dan bar statistik dirender di halaman yang tidak menuntut sesi,
+     * jadi ketiga kelompok ini harus ikut keluar dari endpoint publik.
+     */
+    public function test_contact_social_and_stats_groups_are_public(): void
+    {
+        Setting::putMany([
+            'contact_phone' => '0812-1111-2222',
+            'social_instagram_url' => 'https://instagram.com/prenatalks',
+            'stats_label_mothers' => 'Ibu hamil terdaftar',
+        ]);
+
+        $response = $this->getJson('/api/v1/settings');
+
+        $response->assertOk()->assertJson([
+            'data' => [
+                'contact_phone' => '0812-1111-2222',
+                'social_instagram_url' => 'https://instagram.com/prenatalks',
+                'stats_label_mothers' => 'Ibu hamil terdaftar',
+            ],
+        ]);
+    }
+
+    /**
+     * Nilai bawaan kontak sengaja diisi dengan teks yang selama ini tampil di
+     * footer, supaya tidak ada perubahan tampilan saat fitur ini dirilis.
+     */
+    public function test_contact_defaults_match_the_previous_hardcoded_footer(): void
+    {
+        $response = $this->getJson('/api/v1/settings');
+
+        $response->assertOk()->assertJson([
+            'data' => [
+                'contact_email' => 'halo@prenatalks.id',
+                'contact_address' => 'Gresik, Jawa Timur',
+            ],
+        ]);
+        $this->assertNull($response->json('data.social_instagram_url'));
+    }
 }

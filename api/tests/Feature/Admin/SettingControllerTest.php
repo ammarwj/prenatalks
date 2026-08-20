@@ -173,4 +173,95 @@ class SettingControllerTest extends TestCase
             ->getJson('/api/v1/admin/settings')
             ->assertOk();
     }
+
+    /**
+     * Menyembunyikan form kontak dari sidebar admin tidak menghalangi
+     * siapa pun yang memanggil endpoint-nya langsung — penolakannya harus
+     * datang dari sini (`Setting::SUPER_ADMIN_GROUPS`).
+     */
+    public function test_plain_admin_cannot_write_super_admin_only_groups(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $headers = $this->authHeader($admin);
+
+        foreach ([
+            ['contact_phone' => '0800-0000-0000'],
+            ['social_instagram_url' => 'https://instagram.com/prenatalks'],
+            ['stats_label_mothers' => 'Angka karangan'],
+        ] as $payload) {
+            $this->withHeaders($headers)
+                ->putJson('/api/v1/admin/settings', $payload)
+                ->assertStatus(403);
+        }
+
+        $this->assertDatabaseMissing('settings', ['key' => 'contact_phone']);
+    }
+
+    public function test_plain_admin_can_still_write_content_groups(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->withHeaders($this->authHeader($admin))
+            ->putJson('/api/v1/admin/settings', ['community_heading' => 'Judul baru'])
+            ->assertOk();
+    }
+
+    public function test_super_admin_can_write_contact_social_and_stats(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->withHeaders($this->authHeader($superAdmin))
+            ->putJson('/api/v1/admin/settings', [
+                'contact_phone' => '0812-1111-2222',
+                'contact_email' => 'halo@prenatalks.id',
+                'contact_address' => 'Gresik, Jawa Timur',
+                'stats_enabled' => false,
+                'stats_label_mothers' => 'Ibu hamil terdaftar',
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('0812-1111-2222', $response->json('data.contact_phone'));
+        $this->assertFalse($response->json('data.stats_enabled'));
+    }
+
+    public function test_social_urls_without_a_scheme_are_completed(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->withHeaders($this->authHeader($superAdmin))
+            ->putJson('/api/v1/admin/settings', [
+                'social_instagram_url' => 'instagram.com/prenatalks',
+                'social_tiktok_url' => '',
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('https://instagram.com/prenatalks', $response->json('data.social_instagram_url'));
+        $this->assertNull($response->json('data.social_tiktok_url'));
+    }
+
+    public function test_invalid_contact_email_and_social_url_are_rejected(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $headers = $this->authHeader($superAdmin);
+
+        $this->withHeaders($headers)
+            ->putJson('/api/v1/admin/settings', ['contact_email' => 'bukan-email'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('contact_email');
+
+        $this->withHeaders($headers)
+            ->putJson('/api/v1/admin/settings', ['social_facebook_url' => 'https://'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('social_facebook_url');
+    }
+
+    public function test_stats_labels_cannot_be_emptied(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->withHeaders($this->authHeader($superAdmin))
+            ->putJson('/api/v1/admin/settings', ['stats_label_contents' => ''])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('stats_label_contents');
+    }
 }

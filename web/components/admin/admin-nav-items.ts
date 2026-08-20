@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Newspaper,
+  Quote,
   Settings,
   UsersRound,
   Video,
@@ -58,6 +59,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     title: "Situs",
     items: [
       { href: "/admin/tentang", label: "Halaman Tentang", icon: Info },
+      { href: "/admin/testimoni", label: "Testimoni", icon: Quote },
       { href: "/admin/brand", label: "Identitas Situs", icon: ImageIcon, superAdminOnly: true },
       { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
     ],

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\Admin\FormExportController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\TeamMemberController as AdminTeamMemberController;
+use App\Http\Controllers\Api\V1\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\Api\V1\ArticleController;
@@ -28,7 +29,9 @@ use App\Http\Controllers\Api\V1\HealthWorkerAccessController;
 use App\Http\Controllers\Api\V1\PregnancyController;
 use App\Http\Controllers\Api\V1\QuestionnaireController;
 use App\Http\Controllers\Api\V1\SettingController;
+use App\Http\Controllers\Api\V1\StatsController;
 use App\Http\Controllers\Api\V1\TeamMemberController;
+use App\Http\Controllers\Api\V1\TestimonialController;
 use App\Http\Controllers\Api\V1\VideoController;
 use App\Services\BrandAssetService;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +51,12 @@ Route::get('/categories', [CategoryController::class, 'index']);
 // Hanya kelompok di Setting::PUBLIC_GROUPS — dipakai halaman /komunitas & /tentang.
 Route::get('/settings', [SettingController::class, 'index']);
 Route::get('/team-members', [TeamMemberController::class, 'index']);
+Route::get('/testimonials', [TestimonialController::class, 'index']);
+
+// Angka landing page (PRD §9 F-01). Tanpa throttle: empat COUNT yang di sisi
+// frontend sudah dilindungi ISR 1 jam, bukan endpoint komputasi seperti
+// /calculator yang menghitung ulang tiap permintaan.
+Route::get('/stats', StatsController::class);
 
 // Publik/login sesuai konfigurasi tiap form — dicek di dalam controller,
 // bukan lewat middleware 'auth:api', karena aksesnya bergantung pada
@@ -139,6 +148,9 @@ Route::middleware('auth:api')->group(function () {
         // Alasan urutan sama seperti FAQ & item checklist di atas.
         Route::patch('/team-members/reorder', [AdminTeamMemberController::class, 'reorder']);
         Route::apiResource('team-members', AdminTeamMemberController::class);
+
+        Route::patch('/testimonials/reorder', [AdminTestimonialController::class, 'reorder']);
+        Route::apiResource('testimonials', AdminTestimonialController::class);
 
         Route::apiResource('forms', AdminFormController::class);
 
