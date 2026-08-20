@@ -84,7 +84,16 @@ class BrandAssetService
         return $value;
     }
 
-    /** Kembalikan aset ke bawaan: hapus berkasnya dan kosongkan setelannya. */
+    /**
+     * Kembalikan aset ke bawaan: hapus berkasnya dan kosongkan path-nya.
+     *
+     * **Nomor versi sengaja dipertahankan**, hanya `path` yang dikosongkan.
+     * Nginx menyajikan `/storage/` sebagai `immutable` selama 30 hari, jadi
+     * versi yang kembali ke 1 setelah dihapus akan membuat unggahan
+     * berikutnya memakai URL yang persis sama dengan unggahan lama padahal
+     * isinya berbeda — dan browser yang sudah menyimpan URL itu tidak akan
+     * pernah mengambilnya lagi. Penghitung ini harus naik terus, selamanya.
+     */
     public function delete(string $asset): void
     {
         $this->assertKnown($asset);
@@ -93,7 +102,9 @@ class BrandAssetService
             Storage::disk('public')->delete(self::DIRECTORY."/{$file}");
         }
 
-        Setting::putMany(["brand_{$asset}" => null]);
+        Setting::putMany([
+            "brand_{$asset}" => ['path' => null, 'version' => $this->currentVersion($asset)],
+        ]);
     }
 
     /**
@@ -111,7 +122,10 @@ class BrandAssetService
         foreach (self::ASSETS as $asset) {
             $value = $this->stored($asset);
 
-            if ($value === null) {
+            // `path` kosong berarti aset sudah dikembalikan ke bawaan —
+            // barisnya masih ada semata-mata untuk menyimpan nomor versi
+            // terakhir supaya penghitungnya tidak mengulang dari awal.
+            if ($value === null || ($value['path'] ?? null) === null) {
                 $payload["brand_{$asset}"] = null;
 
                 continue;

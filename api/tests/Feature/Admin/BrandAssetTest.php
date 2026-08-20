@@ -106,6 +106,33 @@ class BrandAssetTest extends TestCase
         );
     }
 
+    /**
+     * Nomor versi tidak boleh pernah mundur, termasuk setelah aset dihapus.
+     *
+     * Nginx menyajikan `/storage/` sebagai `immutable` selama 30 hari. Bila
+     * versi kembali ke 1 setelah dihapus, unggahan berikutnya memakai URL
+     * yang persis sama dengan unggahan lama padahal isinya berbeda — dan
+     * browser yang sudah menyimpan URL itu tidak akan pernah mengambilnya
+     * lagi. Persis kegagalan yang seharusnya dicegah oleh penomoran versi.
+     */
+    public function test_version_never_goes_backwards_after_delete(): void
+    {
+        $headers = $this->superAdmin();
+
+        $this->postJson('/api/v1/admin/brand/hero', [
+            'file' => UploadedFile::fake()->image('a.jpg', 1000, 1000),
+        ], $headers)->assertOk()->assertJsonPath('data.brand_hero.version', 1);
+
+        $this->deleteJson('/api/v1/admin/brand/hero', [], $headers)->assertOk();
+
+        $response = $this->postJson('/api/v1/admin/brand/hero', [
+            'file' => UploadedFile::fake()->image('b.jpg', 900, 900),
+        ], $headers);
+
+        $response->assertOk()->assertJsonPath('data.brand_hero.version', 2);
+        $this->assertStringContainsString('?v=2', $response->json('data.brand_hero.url'));
+    }
+
     public function test_logo_is_scaled_down_to_the_maximum_width(): void
     {
         $response = $this->postJson('/api/v1/admin/brand/logo', [
