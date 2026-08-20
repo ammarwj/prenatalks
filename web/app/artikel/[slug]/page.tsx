@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { Calendar, Clock, Share2, User } from "lucide-react";
 
 import { ArticleCard } from "@/components/articles/article-card";
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
-import { sanitizeArticleHtml } from "@/lib/sanitize-html";
+import { sanitizeRichTextHtml } from "@/lib/sanitize-html";
 import type { Article } from "@/lib/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -54,7 +55,7 @@ export default async function ArticleDetailPage({
   const publishedDate = article.published_at ? new Date(article.published_at) : null;
   const reviewedDate = new Date(article.reviewed_at);
   const shareText = encodeURIComponent(`${article.title} — ${SITE_URL}/artikel/${article.slug}`);
-  const sanitizedContent = sanitizeArticleHtml(article.content);
+  const sanitizedContent = sanitizeRichTextHtml(article.content);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -157,6 +158,8 @@ export default async function ArticleDetailPage({
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

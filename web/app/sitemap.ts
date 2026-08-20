@@ -17,6 +17,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/faq`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/tentang`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/komunitas`, changeFrequency: "monthly", priority: 0.5 },
+    // Dokumen legal jarang berubah dan bukan halaman pencarian, tapi tetap
+    // diindeks: mesin pencari memperlakukan keberadaannya sebagai sinyal
+    // kepercayaan situs.
+    { url: `${SITE_URL}/kebijakan-privasi`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE_URL}/syarat-ketentuan`, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   let page = 1;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
+import { RISK_DISCLAIMER_TEXT } from "@/components/shared/risk-disclaimer";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -16,8 +17,8 @@ import type { ContactSettings, SocialSettings } from "@/lib/types";
 const ABOUT_LINKS = [
   { label: "Tentang PrenaTalks", href: "/tentang" },
   { label: "Tim Ahli", href: "/tentang" },
-  { label: "Kebijakan Privasi", href: "#" },
-  { label: "Syarat & Ketentuan", href: "#" },
+  { label: "Kebijakan Privasi", href: "/kebijakan-privasi" },
+  { label: "Syarat & Ketentuan", href: "/syarat-ketentuan" },
 ];
 
 const HELP_LINKS = [
@@ -183,11 +184,23 @@ export async function Footer() {
         </div>
       </div>
 
+      {/*
+        Disclaimer medis PRD §12.4 wajib tampil di footer. Teksnya diambil dari
+        konstanta yang sama dengan yang dipakai halaman hasil risiko dan
+        kalkulator, dan sengaja tetap di kode — bukan di `settings` — supaya
+        tidak bisa terhapus dari panel admin, mengikuti perlakuan yang sama
+        untuk catatan keselamatan di halaman komunitas.
+      */}
       <div className="bg-brand-purple">
-        <p className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 text-center text-xs text-white/90">
-          &copy; {new Date().getFullYear()} PrenaTalks. Sejak 2020. Seluruh hak
-          cipta dilindungi.
-        </p>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+          <p className="text-center text-[11px] leading-relaxed text-white/80 sm:text-xs">
+            {RISK_DISCLAIMER_TEXT}
+          </p>
+          <p className="mt-3 border-t border-white/20 pt-3 text-center text-xs text-white/90">
+            &copy; {new Date().getFullYear()} PrenaTalks. Sejak 2020. Seluruh hak
+            cipta dilindungi.
+          </p>
+        </div>
       </div>
     </footer>
   );

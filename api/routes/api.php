@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardContr
 use App\Http\Controllers\Api\V1\Admin\FaqController as AdminFaqController;
 use App\Http\Controllers\Api\V1\Admin\FormController as AdminFormController;
 use App\Http\Controllers\Api\V1\Admin\FormExportController;
+use App\Http\Controllers\Api\V1\Admin\LegalDocumentController as AdminLegalDocumentController;
 use App\Http\Controllers\Api\V1\Admin\QuestionnaireController as AdminQuestionnaireController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\TeamMemberController as AdminTeamMemberController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\HealthWorkerAccessController;
+use App\Http\Controllers\Api\V1\LegalDocumentController;
 use App\Http\Controllers\Api\V1\PregnancyController;
 use App\Http\Controllers\Api\V1\QuestionnaireController;
 use App\Http\Controllers\Api\V1\SettingController;
@@ -33,6 +35,7 @@ use App\Http\Controllers\Api\V1\StatsController;
 use App\Http\Controllers\Api\V1\TeamMemberController;
 use App\Http\Controllers\Api\V1\TestimonialController;
 use App\Http\Controllers\Api\V1\VideoController;
+use App\Models\LegalDocument;
 use App\Services\BrandAssetService;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +50,12 @@ Route::get('/videos', [VideoController::class, 'index']);
 Route::get('/videos/{slug}', [VideoController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
+
+// Syarat & Ketentuan dan Kebijakan Privasi (PRD §12.3). Segmen {slug} dibatasi
+// di sini dengan alasan yang sama seperti /admin/brand/{asset}: nilai di luar
+// daftar berhenti sebagai 404 rute, bukan merambat sampai ke controller.
+Route::get('/legal-documents/{slug}', [LegalDocumentController::class, 'show'])
+    ->whereIn('slug', array_keys(LegalDocument::SLUGS));
 
 // Hanya kelompok di Setting::PUBLIC_GROUPS — dipakai halaman /komunitas & /tentang.
 Route::get('/settings', [SettingController::class, 'index']);
@@ -123,6 +132,15 @@ Route::middleware('auth:api')->group(function () {
             ->whereIn('asset', BrandAssetService::ASSETS);
         Route::delete('/brand/{asset}', [AdminBrandController::class, 'destroy'])
             ->whereIn('asset', BrandAssetService::ASSETS);
+
+        // Dokumen legal (PRD §12.3). Didaftarkan satu per satu, bukan lewat
+        // apiResource: himpunannya tetap dua dan keduanya ditautkan dari
+        // footer serta checkbox persetujuan di halaman daftar, jadi ketiadaan
+        // rute create/delete ditegakkan router — bukan sekadar tombol yang
+        // disembunyikan dari antarmuka.
+        Route::get('/legal-documents', [AdminLegalDocumentController::class, 'index']);
+        Route::get('/legal-documents/{legalDocument}', [AdminLegalDocumentController::class, 'show']);
+        Route::put('/legal-documents/{legalDocument}', [AdminLegalDocumentController::class, 'update']);
     });
 
     Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {

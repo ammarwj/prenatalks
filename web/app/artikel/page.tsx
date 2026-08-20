@@ -1,6 +1,7 @@
 import { ArticleCard } from "@/components/articles/article-card";
 import { ArticleFilters } from "@/components/articles/article-filters";
 import { ArticlePagination } from "@/components/articles/article-pagination";
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import type { ArticleSummary, Category } from "@/lib/types";
@@ -68,6 +69,8 @@ export default async function ArticleListPage({
           <ArticlePagination currentPage={currentPage} totalPages={totalPages} searchParams={params} />
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

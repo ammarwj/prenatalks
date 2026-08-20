@@ -27,5 +27,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ChecklistItemSeeder::class);
         $this->call(SettingSeeder::class);
         $this->call(TestimonialSeeder::class);
+        $this->call(LegalDocumentSeeder::class);
     }
 }

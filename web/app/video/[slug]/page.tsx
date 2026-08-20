@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Calendar, ExternalLink } from "lucide-react";
 
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import { formatDuration } from "@/lib/validations/video";
@@ -106,6 +107,8 @@ export default async function VideoDetailPage({
           )}
         </article>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, HeartHandshake, Users } from "lucide-react";
 
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import type { BrandColors, PublicSettings, TeamMember } from "@/lib/types";
@@ -249,6 +250,8 @@ export default async function TentangPage() {
           </div>
         </section>
       </main>
+
+      <Footer />
     </div>
   );
 }

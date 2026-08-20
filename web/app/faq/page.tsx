@@ -1,4 +1,5 @@
 import { FaqAccordion } from "@/components/faq/faq-accordion";
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { apiServerGet } from "@/lib/api-server";
 import type { Faq } from "@/lib/types";
@@ -46,6 +47,8 @@ export default async function FaqPage() {
           <FaqAccordion faqs={faqs} />
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { VideoCard } from "@/components/videos/video-card";
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { cn } from "@/lib/utils";
 import { apiServerGet } from "@/lib/api-server";
@@ -80,6 +81,8 @@ export default async function VideoGalleryPage({
           </nav>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

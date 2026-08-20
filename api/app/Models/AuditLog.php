@@ -31,6 +31,7 @@ class AuditLog extends Model
         'Questionnaire' => 'Kuesioner Risiko',
         'ChecklistItem' => 'Item Checklist',
         'Setting' => 'Pengaturan',
+        'LegalDocument' => 'Halaman Legal',
         'TeamMember' => 'Profil Tim',
         'Testimonial' => 'Testimoni',
         'User' => 'Pengguna',

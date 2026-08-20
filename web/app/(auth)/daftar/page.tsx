@@ -159,12 +159,27 @@ export default function DaftarPage() {
             )}
           />
           <label htmlFor="agree" className="text-sm leading-snug text-muted-foreground">
+            {/*
+              Dibuka di tab baru: pengguna sedang di tengah mengisi form
+              pendaftaran, dan menavigasi keluar akan membuang seluruh isian
+              mereka — termasuk kata sandi yang sudah diketik.
+            */}
             Saya menyetujui{" "}
-            <Link href="#" className="font-semibold text-brand-purple hover:underline">
+            <Link
+              href="/syarat-ketentuan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-brand-purple hover:underline"
+            >
               Syarat & Ketentuan
             </Link>{" "}
             dan{" "}
-            <Link href="#" className="font-semibold text-brand-purple hover:underline">
+            <Link
+              href="/kebijakan-privasi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-brand-purple hover:underline"
+            >
               Kebijakan Privasi
             </Link>{" "}
             PrenaTalks.

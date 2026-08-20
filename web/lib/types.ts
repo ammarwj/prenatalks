@@ -658,6 +658,30 @@ export type PublicStats = {
   items: StatItem[];
 };
 
+/**
+ * PRD §12.3 & Lampiran C — Syarat & Ketentuan dan Kebijakan Privasi.
+ *
+ * Slug dikunci di backend (`LegalDocument::SLUGS`) karena ditautkan dari
+ * footer dan dari checkbox persetujuan di halaman daftar.
+ */
+export type LegalDocumentSlug = "syarat-ketentuan" | "kebijakan-privasi";
+
+export type LegalDocument = {
+  slug: LegalDocumentSlug;
+  title: string;
+  /** HTML dari TipTap — wajib lewat `sanitizeRichTextHtml()` sebelum dirender. */
+  body: string;
+  effective_date: string | null;
+  updated_at: string;
+};
+
+export type AdminLegalDocument = LegalDocument & {
+  id: number;
+  is_published: boolean;
+  updated_by: { id: number; name: string } | null;
+  created_at: string;
+};
+
 /** PRD §9 F-01 — testimoni di landing page. */
 export type Testimonial = {
   id: number;

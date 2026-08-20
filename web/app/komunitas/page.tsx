@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, ShieldAlert } from "lucide-react";
 
+import { Footer } from "@/components/shared/footer";
 import { PublicHeader } from "@/components/shared/public-header";
 import { TelegramIcon, WhatsappIcon } from "@/components/shared/social-icons";
 import { apiServerGet } from "@/lib/api-server";
@@ -133,6 +134,8 @@ export default async function KomunitasPage() {
           .
         </p>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -20,10 +20,14 @@ export const TESTIMONIALS_TAG = "testimonials";
 /** `GET /stats` — angka landing page, ISR 1 jam sesuai PRD §9 F-01. */
 export const STATS_TAG = "stats";
 
+/** `GET /legal-documents/{slug}` — Syarat & Ketentuan dan Kebijakan Privasi. */
+export const LEGAL_DOCUMENTS_TAG = "legal-documents";
+
 export type PublicCacheTag =
   | typeof PUBLIC_SETTINGS_TAG
   | typeof TESTIMONIALS_TAG
-  | typeof STATS_TAG;
+  | typeof STATS_TAG
+  | typeof LEGAL_DOCUMENTS_TAG;
 
 /**
  * Minta halaman publik memuat ulang data yang baru saja disunting. Dipanggil
