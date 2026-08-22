@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { SuperAdminRestricted, useSuperAdminGuard } from "@/components/admin/super-admin-guard";
 import { TablePagination } from "@/components/admin/table-pagination";
+import { UserPasswordDialog } from "@/components/admin/user-password-dialog";
 import { UserRoleDialog } from "@/components/admin/user-role-dialog";
 import { TableSkeleton } from "@/components/shared/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -78,6 +79,7 @@ export default function PenggunaAdminPage() {
   const [page, setPage] = useState(1);
 
   const [editing, setEditing] = useState<AdminUser | null>(null);
+  const [resettingPassword, setResettingPassword] = useState<AdminUser | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams({ sort, direction, page: String(page) });
@@ -140,12 +142,17 @@ export default function PenggunaAdminPage() {
     setUsers((prev) => (prev ?? []).map((u) => (u.id === updated.id ? updated : u)));
   }
 
+  function handlePasswordSaved() {
+    toast.success("Kata sandi pengguna diperbarui");
+    setResettingPassword(null);
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-extrabold text-foreground">Pengguna</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Kelola peran dan status akun. Nama, email, dan kata sandi tetap milik pemilik akun —
+          Kelola peran, status akun, dan kata sandi. Nama dan email tetap milik pemilik akun —
           panel ini tidak bisa mengubahnya.
         </p>
       </div>
@@ -257,9 +264,19 @@ export default function PenggunaAdminPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(user)}>
-                      Ubah peran
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(user)}>
+                        Ubah peran
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setResettingPassword(user)}
+                      >
+                        Ubah kata sandi
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -278,6 +295,12 @@ export default function PenggunaAdminPage() {
         user={editing}
         onOpenChange={(open) => !open && setEditing(null)}
         onSaved={handleSaved}
+      />
+
+      <UserPasswordDialog
+        user={resettingPassword}
+        onOpenChange={(open) => !open && setResettingPassword(null)}
+        onSaved={handlePasswordSaved}
       />
     </div>
   );

@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -196,5 +197,91 @@ class UserControllerTest extends TestCase
             ->getJson("/api/v1/admin/users/{$target->id}")
             ->assertOk()
             ->assertJson(['data' => ['name' => 'Siti Rahmawati']]);
+    }
+
+    public function test_super_admin_can_reset_another_users_password(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $target = User::factory()->create();
+
+        $refreshToken = $target->refreshTokens()->create([
+            'token_hash' => hash('sha256', 'plain-token'),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->withHeaders($this->authHeader($superAdmin))
+            ->postJson("/api/v1/admin/users/{$target->id}/reset-password", [
+                'password' => 'rahasiabaru9',
+                'password_confirmation' => 'rahasiabaru9',
+            ])
+            ->assertOk();
+
+        $this->assertTrue(Hash::check('rahasiabaru9', $target->fresh()->password_hash));
+
+        // Sesi lama pengguna dicabut, sama seperti ganti kata sandi mandiri.
+        $this->assertNotNull($refreshToken->fresh()->revoked_at);
+
+        // password_hash diredaksi dari diff otomatis, jadi harus dicatat eksplisit.
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'password_reset',
+            'model_type' => 'User',
+            'model_id' => $target->id,
+            'user_id' => $superAdmin->id,
+        ]);
+    }
+
+    public function test_reset_password_rejects_short_password(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $target = User::factory()->create();
+
+        $this->withHeaders($this->authHeader($superAdmin))
+            ->postJson("/api/v1/admin/users/{$target->id}/reset-password", [
+                'password' => 'short1',
+                'password_confirmation' => 'short1',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+    }
+
+    public function test_reset_password_rejects_password_without_digit(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $target = User::factory()->create();
+
+        $this->withHeaders($this->authHeader($superAdmin))
+            ->postJson("/api/v1/admin/users/{$target->id}/reset-password", [
+                'password' => 'hanyahurufsaja',
+                'password_confirmation' => 'hanyahurufsaja',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+    }
+
+    public function test_reset_password_rejects_mismatched_confirmation(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $target = User::factory()->create();
+
+        $this->withHeaders($this->authHeader($superAdmin))
+            ->postJson("/api/v1/admin/users/{$target->id}/reset-password", [
+                'password' => 'rahasiabaru9',
+                'password_confirmation' => 'rahasialain9',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+    }
+
+    public function test_reset_password_requires_super_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $target = User::factory()->create();
+
+        $this->withHeaders($this->authHeader($admin))
+            ->postJson("/api/v1/admin/users/{$target->id}/reset-password", [
+                'password' => 'rahasiabaru9',
+                'password_confirmation' => 'rahasiabaru9',
+            ])
+            ->assertStatus(403);
     }
 }

@@ -50,6 +50,11 @@ class AuditLog extends Model
         // model lain yang mencatat aksi baca — di sini wajib karena yang
         // diaudit justru siapa melihat data kesehatan siapa (PRD §9 F-15).
         'accessed' => 'Diakses',
+
+        // Dicatat eksplisit dari AdminUserController::resetPassword() —
+        // `password_hash` ada di GLOBAL_REDACTED, jadi hook `updated` otomatis
+        // tidak akan menghasilkan diff apa pun bila hanya kolom itu yang berubah.
+        'password_reset' => 'Kata Sandi Direset',
     ];
 
     protected function casts(): array

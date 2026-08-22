@@ -130,6 +130,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
         Route::apiResource('users', AdminUserController::class)->only(['index', 'show', 'update']);
 
+        // Throttle sama seperti /auth/change-password — keduanya endpoint
+        // yang menulis password_hash.
+        Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])
+            ->middleware('throttle:10,1');
+
         // Identitas situs (PRD §1.4). Segmen {asset} dibatasi di sini supaya
         // nilai di luar daftar berhenti sebagai 404 rute, bukan merambat
         // sampai ke service dan berakhir 500.

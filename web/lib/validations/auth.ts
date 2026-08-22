@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Aturan password mengikuti PRD F-02: minimal 8 karakter, mengandung huruf dan angka.
  */
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, "Password minimal 8 karakter")
   .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, "Password harus mengandung huruf dan angka");
@@ -67,3 +67,16 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+/** Admin mengatur kata sandi baru untuk pengguna lain (`POST /admin/users/{id}/reset-password`). */
+export const adminResetPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    password_confirmation: z.string().min(1, "Konfirmasi kata sandi wajib diisi"),
+  })
+  .refine((values) => values.password === values.password_confirmation, {
+    message: "Konfirmasi kata sandi tidak cocok",
+    path: ["password_confirmation"],
+  });
+
+export type AdminResetPasswordInput = z.infer<typeof adminResetPasswordSchema>;

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\AdminUserResource;
 use App\Models\User;
+use App\Services\AuditRecorder;
+use App\Services\RefreshTokenService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -26,6 +28,8 @@ class UserController extends Controller
 
     /** Kolom yang boleh dipakai mengurutkan — bukan input bebas ke SQL. */
     private const SORTABLE = ['name', 'email', 'role', 'created_at', 'last_login_at'];
+
+    public function __construct(private readonly RefreshTokenService $refreshTokens) {}
 
     public function index(Request $request)
     {
@@ -100,6 +104,34 @@ class UserController extends Controller
         $user->forceFill($validated)->save();
 
         return $this->success(new AdminUserResource($user->fresh()), 'Pengguna diperbarui');
+    }
+
+    /**
+     * Atur ulang kata sandi pengguna lain langsung dari panel admin — beda
+     * dari `/auth/change-password` yang mensyaratkan `current_password` milik
+     * pemiliknya sendiri. Semua refresh token pengguna dicabut, sama seperti
+     * ganti kata sandi mandiri, supaya sesi yang mungkin sudah dikompromikan
+     * ikut mati saat kata sandinya diganti admin.
+     */
+    public function resetPassword(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
+        ], [
+            'password.min' => 'Kata sandi minimal 8 karakter',
+            'password.regex' => 'Kata sandi harus mengandung huruf dan angka',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok',
+        ]);
+
+        $user->forceFill(['password_hash' => $validated['password']])->save();
+
+        $this->refreshTokens->revokeAllFor($user);
+
+        // `password_hash` diredaksi dari diff otomatis (lihat AuditRecorder),
+        // jadi dicatat eksplisit di sini supaya tetap terlihat di audit log.
+        AuditRecorder::record('password_reset', $user, null);
+
+        return $this->success(null, 'Kata sandi pengguna diperbarui');
     }
 
     /**
